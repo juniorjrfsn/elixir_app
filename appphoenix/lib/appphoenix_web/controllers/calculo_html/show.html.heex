@@ -1,0 +1,17 @@
+<.header>
+  Calculo <%= @calculo.id %>
+  <:subtitle>This is a calculo record from your database.</:subtitle>
+  <:actions>
+    <.link href={~p"/calculos/#{@calculo}/edit"}>
+      <.button>Edit calculo</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Campo1"><%= @calculo.campo1 %></:item>
+  <:item title="Campo2"><%= @calculo.campo2 %></:item>
+  <:item title="Total"><%= @calculo.total %></:item>
+</.list>
+
+<.back navigate={~p"/calculos"}>Back to calculos</.back>
