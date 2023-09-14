@@ -15,54 +15,52 @@ defmodule AppphoenixWeb.CalculoController do
   end
 
   # def create(conn, %{"calculo" => calculo_params}) do
-  #    case Calculos.create_calculo(calculo_params) do
-  #       {:ok, calculo} ->
-  #         conn
-  #         |> put_flash(:info, "Calculo created successfully.")
-  #         |> redirect(to: ~p"/calculos/#{calculo}")
+  #   case Calculos.create_calculo(calculo_params) do
+  #     {:ok, calculo} ->
+  #       conn
+  #       |> put_flash(:info, "Calculo created successfully.")
+  #       |> redirect(to: ~p"/calculos/#{calculo}")
 
-  #       {:error, %Ecto.Changeset{} = changeset} ->
-  #         render(conn, :new, changeset: changeset)
-  #     end
+  #     {:error, %Ecto.Changeset{} = changeset} ->
+  #       render(conn, :new, changeset: changeset)
+  #   end
   # end
 
   def create(conn, %{"calculo" => calculo_params}) do
 
-      # num1 = elem( calculo_params["campo1"] |> String.to_float(),0)
-      # num2 = elem( calculo_params["campo2"] |> String.to_float(),0)
-      num1 = elem(Float.parse(calculo_params["campo1"]),0)
-      num2 = elem(Float.parse(calculo_params["campo2"]),0)
-      total = num1 + num2
+    # num1 = elem( calculo_params["campo1"] |> String.to_float(),0)
+    # num2 = elem( calculo_params["campo2"] |> String.to_float(),0)
+    num1 = elem(Float.parse(calculo_params["campo1"]),0)
+    num2 = elem(Float.parse(calculo_params["campo2"]),0)
+    total = num1 + num2
 
 
-      #calculo_params = calculo_params | put_param("total", total)
-      #Tuple.delete_at(calculo_params, 2)
-      #calculo_params["total"] = total
-      calculo = %Appphoenix.Calculos.Calculo{
-        campo1: num1,
-        campo2: num2,
-        total: total
-      }
-      conn
-        |> put_flash(:info, "Calculo created successfully. #{calculo_params} " )
-        |> redirect(to: ~p"/calculos/new")
-        # render(conn, :edit, calculo: calculo, changeset: changeset)
-      # changeset = Calculos.change_calculo(calculo)
-      # render(conn, :new, calculo: calculo, changeset: changeset)
-      # case Calculos.create_calculo(calculo) do
-      #   {:ok, calculo} ->
-      #     conn
-      #     |> put_flash(:info, "Calculo created successfully.")
-      #     |> redirect(to: ~p"/calculos/#{calculo}")
+    #calculo_params = calculo_params | put_param("total", total)
+    #Tuple.delete_at(calculo_params, 2)
+    #calculo_params["total"] = total
+    calculo = %Appphoenix.Calculos.Calculo{
+      campo1: num1,
+      campo2: num2,
+      total: total
+    }
+    conn
+      |> put_flash(:info, "Calculo created successfully. #{total} " )
+      #  |> redirect(to: ~p"/calculos/new")
 
-      #   {:error, %Ecto.Changeset{} = changeset} ->
-      #     render(conn, :new, changeset: changeset)
-      # end
-  end
+     changeset = Calculos.change_calculo(calculo)
+     render(conn, :new, calculo: calculo, changeset: changeset)
 
+    # case Calculos.create_calculo(calculo) do
+    #   {:ok, calculo} ->
+    #     conn
+    #     |> put_flash(:info, "Calculo created successfully.")
+    #     |> redirect(to: ~p"/calculos/#{calculo}")
 
+    #   {:error, %Ecto.Changeset{} = changeset} ->
+    #     render(conn, :new, changeset: changeset)
+    # end
 
-
+end
 
 
   def show(conn, %{"id" => id}) do

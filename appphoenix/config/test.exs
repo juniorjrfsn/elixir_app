@@ -17,7 +17,7 @@ config :appphoenix, Appphoenix.Repo,
 # you can enable the server option below.
 config :appphoenix, AppphoenixWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "IcOgg8MUDV3hyGzqXrRQyfAPldKVMAcSuv7Kpm7/zAioDFb/+aKQ6+LO5ZdGpKoU",
+  secret_key_base: "wIFlfN0xlPMgfmSwvN09mUaeyNWWCyOXoFoID/qq+KVSJhVRwPvU/CoOU5vIXkna",
   server: false
 
 # In test we don't send emails.

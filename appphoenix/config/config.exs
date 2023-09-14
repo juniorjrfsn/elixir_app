@@ -18,7 +18,7 @@ config :appphoenix, AppphoenixWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Appphoenix.PubSub,
-  live_view: [signing_salt: "Hd17ytZl"]
+  live_view: [signing_salt: "6EmCdSYa"]
 
 # Configures the mailer
 #

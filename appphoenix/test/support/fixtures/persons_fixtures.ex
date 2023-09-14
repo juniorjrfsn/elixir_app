@@ -11,21 +11,6 @@ defmodule Appphoenix.PersonsFixtures do
     {:ok, person} =
       attrs
       |> Enum.into(%{
-        description: "some description",
-        name: "some name"
-      })
-      |> Appphoenix.Persons.create_person()
-
-    person
-  end
-
-  @doc """
-  Generate a person.
-  """
-  def person_fixture(attrs \\ %{}) do
-    {:ok, person} =
-      attrs
-      |> Enum.into(%{
         name: "some name",
         description: "some description"
       })

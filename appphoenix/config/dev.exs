@@ -23,7 +23,7 @@ config :appphoenix, AppphoenixWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "qi+9lp/5QSspClfgtmwwc/CXNnahrNjaRiNz0nIpvw9MitYS4H4C9p/Axm5v8T4p",
+  secret_key_base: "M3yNbREVqnVlrU6QsJhTu4uYqW6MRss3SpnZjqw84p0JjmKQ+GcQJJb/A0iecXTz",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:default, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]}

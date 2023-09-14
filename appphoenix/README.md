@@ -16,6 +16,24 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
   * Docs: https://hexdocs.pm/phoenix
   * Forum: https://elixirforum.com/c/phoenix-forum
   * Source: https://github.com/phoenixframework/phoenix
+# Appphoenix
+
+To start your Phoenix server:
+
+  * Run `mix setup` to install and setup dependencies
+  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
+
+Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
+
+Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+
+## Learn more
+
+  * Official website: https://www.phoenixframework.org/
+  * Guides: https://hexdocs.pm/phoenix/overview.html
+  * Docs: https://hexdocs.pm/phoenix
+  * Forum: https://elixirforum.com/c/phoenix-forum
+  * Source: https://github.com/phoenixframework/phoenix
 
 
 # Create PhoenixFramework app
@@ -26,12 +44,12 @@ ERLANG
   apt install esl-erlang
 ELIXIR
 
-============= instalação do phoenix ====================
+============= instalaÃ§Ã£o do phoenix ====================
 mix archive.uninstall archive.ez --forceY
 
 mix local.rebar --force
 mix local.hex --force
-mix deps.get
+
 mix archive.install hex ex_doc
 mix local.hex
 mix archive.install github hexpm/hex branch latest
@@ -42,6 +60,8 @@ mix archive.install hex phx_new
 ===================================================
 
 mix phx.new appphoenix
+mix deps.get
+cd appphoenix
 
 
 We are almost there! The following steps are missing:
@@ -110,7 +130,7 @@ You can also run your app inside IEx (Interactive Elixir) as:
     https://hexdocs.pm/phoenix/Mix.Tasks.Phx.Gen.Html.html
     mix phx.gen.html Functions Task tasks title:string description:string
 
-    # gera��o de controllers sem conex�o com banco de dados
+    # geração de controllers sem conexão com banco de dados
     mix phx.gen.html Calculos  Calculo  calculos --no-schema --no-context
     # mas prefiro gerar completo
     mix phx.gen.html Calculos  Calculo  calculos campo1:float campo2:float total:float
@@ -153,7 +173,7 @@ You can also run your app inside IEx (Interactive Elixir) as:
     # starting in server (Dev)
     $ PORT=4000 MIX_ENV=dev elixir --erl "-detached" -S mix phx.server
 
-  ## produ��o
+  ## produï¿œï¿œo
     $ mix phx.gen.secret
     $ REALLY_LONG_SECRET => PoWY5+8jE5Q3O8i5qf8KrMHOM9FiB3BT/NLrzWWseutEVLNpjhhF66tz7ZlnJ+AG
     ## $ export SECRET_KEY_BASE=REALLY_LONG_SECRET
@@ -230,7 +250,7 @@ You can also run your app inside IEx (Interactive Elixir) as:
   -- http://localhost:4001
 
 
-    # starting in server (Produ��o)
+    # starting in server (Produï¿œï¿œo)
     $ PORT=4001 MIX_ENV=prod elixir --erl "-detached" -S mix phx.server
 
       http://127.0.0.1:4001/persons

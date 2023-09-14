@@ -21,18 +21,17 @@ defmodule AppphoenixWeb.Router do
 
     resources "/persons", PersonController
     resources "/tasks", TaskController
+    resources "/post_web", TaskController
     resources "/posts", PostController
     resources "/calculos", CalculoController
 
   end
 
-    scope "/api", AppphoenixWeb do
-      pipe_through :api
-      resources "/posts", PostserviceController, except: [:new, :edit]
-      resources "/persons", PessoaController, except: [:new, :edit]
-    end
-
-
+  scope "/api", AppphoenixWeb do
+    pipe_through :api
+    resources "/posts", PostController, except: [:new, :edit]
+    resources "/persons", PessoaController, except: [:new, :edit]
+  end
   # Other scopes may use custom stacks.
   # scope "/api", AppphoenixWeb do
   #   pipe_through :api
