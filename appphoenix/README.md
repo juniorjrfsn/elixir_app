@@ -173,7 +173,7 @@ You can also run your app inside IEx (Interactive Elixir) as:
     # starting in server (Dev)
     $ PORT=4000 MIX_ENV=dev elixir --erl "-detached" -S mix phx.server
 
-  ## produção
+  ## Produção
     $ mix phx.gen.secret
     $ REALLY_LONG_SECRET => PoWY5+8jE5Q3O8i5qf8KrMHOM9FiB3BT/NLrzWWseutEVLNpjhhF66tz7ZlnJ+AG
     ## $ export SECRET_KEY_BASE=REALLY_LONG_SECRET
