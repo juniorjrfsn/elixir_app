@@ -1,0 +1,24 @@
+<.header>
+  Listing Fisica
+  <:actions>
+    <.link href={~p"/fisica/new"}>
+      <.button>New Formula</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="fisica" rows={@fisica} row_click={&JS.navigate(~p"/fisica/#{&1}")}>
+  <:col :let={formula} label="Massa"><%= formula.massa %></:col>
+  <:col :let={formula} label="Espaco"><%= formula.espaco %></:col>
+  <:action :let={formula}>
+    <div class="sr-only">
+      <.link navigate={~p"/fisica/#{formula}"}>Show</.link>
+    </div>
+    <.link navigate={~p"/fisica/#{formula}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={formula}>
+    <.link href={~p"/fisica/#{formula}"} method="delete" data-confirm="Are you sure?">
+      Delete
+    </.link>
+  </:action>
+</.table>

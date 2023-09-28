@@ -1,0 +1,16 @@
+<.header>
+  Formula <%= @formula.id %>
+  <:subtitle>This is a formula record from your database.</:subtitle>
+  <:actions>
+    <.link href={~p"/fisica/#{@formula}/edit"}>
+      <.button>Edit formula</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Massa"><%= @formula.massa %></:item>
+  <:item title="Espaco"><%= @formula.espaco %></:item>
+</.list>
+
+<.back navigate={~p"/fisica"}>Back to fisica</.back>

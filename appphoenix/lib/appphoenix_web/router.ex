@@ -24,6 +24,7 @@ defmodule AppphoenixWeb.Router do
     resources "/post_web", TaskController
     resources "/posts", PostController
     resources "/calculos", CalculoController
+    resources "/fisica", FormulaController
 
   end
 
