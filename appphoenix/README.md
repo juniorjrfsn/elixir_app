@@ -44,7 +44,7 @@ ERLANG
   apt install esl-erlang
 ELIXIR
 
-============= instalaÃ§Ã£o do phoenix ====================
+============= INSTALAÇÃO do phoenix ====================
 mix archive.uninstall archive.ez --forceY
 
 mix local.rebar --force
@@ -173,7 +173,7 @@ You can also run your app inside IEx (Interactive Elixir) as:
     # starting in server (Dev)
     $ PORT=4000 MIX_ENV=dev elixir --erl "-detached" -S mix phx.server
 
-  ## produï¿œï¿œo
+  ## produção
     $ mix phx.gen.secret
     $ REALLY_LONG_SECRET => PoWY5+8jE5Q3O8i5qf8KrMHOM9FiB3BT/NLrzWWseutEVLNpjhhF66tz7ZlnJ+AG
     ## $ export SECRET_KEY_BASE=REALLY_LONG_SECRET
@@ -250,7 +250,7 @@ You can also run your app inside IEx (Interactive Elixir) as:
   -- http://localhost:4001
 
 
-    # starting in server (Produï¿œï¿œo)
+    # starting in server (Produção)
     $ PORT=4001 MIX_ENV=prod elixir --erl "-detached" -S mix phx.server
 
       http://127.0.0.1:4001/persons
