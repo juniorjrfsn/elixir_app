@@ -1,7 +1,7 @@
 <.simple_form :let={f} for={@changeset} action={@action}>
   <.error :if={@changeset.action}>ERRO: erro ao calcular peso</.error>
   <.input field={f[:massa]}       type="number" label="Massa" step="any" style="max-width:400px;"/>
-  <.input field={f[:espaco]}      type="hidden"   label="Espaco" style="max-width:400px;" />
+  <.input field={f[:espaco]}      type="hidden" label="Espaco" style="max-width:400px;" />
   <select class="form-control" name="select-espaco" id="select-espaco" style="max-width:400px;" >
     <option value="Sol">Sol</option>
     <option value="Terra" selected="selected">Terra</option>
@@ -18,11 +18,11 @@
 <script type="text/javascript">
   $(function() {
     $('input[name="formula[espaco]"]').val('Terra');
-      if($('input[name="formula[massa]"]').val() !== null && $('input[name="formula[massa]"]').val()  !== ''){
-        $('button[name="calcular"]').removeAttr('disabled');
-      }else{
-        $('button[name="calcular"]').attr('disabled','disabled');
-      }
+    if($('input[name="formula[massa]"]').val() !== null && $('input[name="formula[massa]"]').val()  !== ''){
+      $('button[name="calcular"]').removeAttr('disabled');
+    }else{
+      $('button[name="calcular"]').attr('disabled','disabled');
+    }
     $( 'select[name="select-espaco"]' ).on( "change", function() {
       var espaco = $( this ).val();
       $('input[name="formula[espaco]"]').val(espaco);
