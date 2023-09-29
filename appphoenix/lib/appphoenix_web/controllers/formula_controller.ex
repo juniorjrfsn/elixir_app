@@ -25,21 +25,21 @@ defmodule AppphoenixWeb.FormulaController do
   def calcpeso(conn, %{"calculo" => calculo_params}) do
 
     massa = elem(Float.parse(calculo_params["massa"]),0)
-    espaco =  calculo_params["espaco"]
+    #espaco =  calculo_params["espaco"]
     total = massa
-
     calculo = %Appphoenix.Fisica.Formula{
       massa: massa,
-      espaco: espaco,
+      peso: massa,
       total: total
     }
     conn
-      |> put_flash(:info, "Calculo created successfully. #{total} " )
-      #  |> redirect(to: ~p"/calculos/new")
+    |> put_flash(:info, "Calculo created successfully. #{total} " )
+    #  |> redirect(to: ~p"/calculos/new")
 
-     changeset = Fisica.change_fisica_peso(calculo)
-     render(conn, :new, calculo: calculo, changeset: changeset) 
-end
+    changeset = Fisica.change_fisica_peso(calculo)
+    render(conn, :new, calculo: calculo, changeset: changeset)
+  end
+
   def create(conn, %{"formula" => formula_params}) do
     case Fisica.create_formula(formula_params) do
       {:ok, formula} ->
