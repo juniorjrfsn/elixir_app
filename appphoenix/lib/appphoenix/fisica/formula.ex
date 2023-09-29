@@ -5,6 +5,7 @@ defmodule Appphoenix.Fisica.Formula do
   schema "fisica" do
     field :massa, :float
     field :espaco, :string
+    field :total, :float
 
     timestamps()
   end

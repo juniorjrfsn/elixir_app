@@ -101,4 +101,8 @@ defmodule Appphoenix.Fisica do
   def change_formula(%Formula{} = formula, attrs \\ %{}) do
     Formula.changeset(formula, attrs)
   end
+
+  def change_fisica_peso(%Formula{} = formula, attrs \\ %{}) do
+    Formula.changeset(formula, attrs)
+  end
 end
