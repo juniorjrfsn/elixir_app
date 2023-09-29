@@ -17,24 +17,24 @@
 
 <script type="text/javascript">
   $(function() {
-      $('input[name="formula[espaco]"]').val('Terra');
-        if($('input[name="formula[massa]"]').val() !== null && $('input[name="formula[massa]"]').val()  !== ''){
-          $('button[name="calcular"]').removeAttr('disabled');
-        }else{
-          $('button[name="calcular"]').attr('disabled','disabled');
-        }
-      $( 'select[name="select-espaco"]' ).on( "change", function() {
-        var espaco = $( this ).val();
-        $('input[name="formula[espaco]"]').val(espaco);
-      });
-      $( 'input[name="formula[massa]"]' ).on( "change", function() {
-        var massa = $( this ).val();
-        if(massa !== null && massa !== ''){
-          $('button[name="calcular"]').removeAttr('disabled');
-          $('button[name="calcular"]').click();
-        }else{
-          $('button[name="calcular"]').attr('disabled','disabled');
-        }
-      });
+    $('input[name="formula[espaco]"]').val('Terra');
+      if($('input[name="formula[massa]"]').val() !== null && $('input[name="formula[massa]"]').val()  !== ''){
+        $('button[name="calcular"]').removeAttr('disabled');
+      }else{
+        $('button[name="calcular"]').attr('disabled','disabled');
+      }
+    $( 'select[name="select-espaco"]' ).on( "change", function() {
+      var espaco = $( this ).val();
+      $('input[name="formula[espaco]"]').val(espaco);
+    });
+    $( 'input[name="formula[massa]"]' ).on( "change", function() {
+      var massa = $( this ).val();
+      if(massa !== null && massa !== ''){
+        $('button[name="calcular"]').removeAttr('disabled');
+        $('button[name="calcular"]').click();
+      }else{
+        $('button[name="calcular"]').attr('disabled','disabled');
+      }
+    });
   });
 </script>
