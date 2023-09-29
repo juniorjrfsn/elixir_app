@@ -22,22 +22,30 @@ defmodule AppphoenixWeb.FormulaController do
   end
 
 
-  def calcpeso(conn, %{"calculo" => calculo_params}) do
+  def calcpeso(conn, %{"formula" => formula_params}) do
 
-    massa = elem(Float.parse(calculo_params["massa"]),0)
-    #espaco =  calculo_params["espaco"]
-    total = massa
-    calculo = %Appphoenix.Fisica.Formula{
+    massa = elem(Float.parse(formula_params["massa"]),0)
+    espaco =  formula_params["espaco"]
+
+    {aceleracao,corpoceleste,peso} = case espaco do
+      "Sol"   -> {274.13              , "Sol"     ,(massa * 274.13)               }
+      "Terra" -> {9.819649737724951   , "Terra"   ,(massa * 9.819649737724951)    }
+      "Lua"   -> {1.625               , "Lua"     ,(massa * 1.625)                }
+      "Marte" -> {3.72076             , "Marte"   ,(massa * 3.72076)              }
+      _ ->       {0                   , "..."     , massa                         }
+    end
+    formula = %Appphoenix.Fisica.Formula{
       massa: massa,
-      peso: massa,
-      total: total
+      espaco: espaco,
+      peso: peso,
+      aceleracao: aceleracao
     }
     conn
-    |> put_flash(:info, "Calculo created successfully. #{total} " )
-    #  |> redirect(to: ~p"/calculos/new")
+    |> put_flash(:info, "Calculo created successfully. #{peso} " )
+    #  |> redirect(to: ~p"/formula/new")
 
-    changeset = Fisica.change_fisica_peso(calculo)
-    render(conn, :new, calculo: calculo, changeset: changeset)
+    changeset = Fisica.change_fisica_peso(formula)
+    render(conn, :peso, formula: formula, changeset: changeset)
   end
 
   def create(conn, %{"formula" => formula_params}) do

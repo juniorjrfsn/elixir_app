@@ -19,6 +19,7 @@ defmodule AppphoenixWeb.Router do
 
     get "/", PageController, :home
     get "/fisica/peso", FormulaController, :peso
+    post "/fisica/calcpeso", FormulaController, :calcpeso
     get "/hello", HelloController, :index
 
     resources "/persons", PersonController

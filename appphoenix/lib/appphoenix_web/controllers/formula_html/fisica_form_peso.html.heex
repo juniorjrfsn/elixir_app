@@ -1,8 +1,40 @@
 <.simple_form :let={f} for={@changeset} action={@action}>
   <.error :if={@changeset.action}>ERRO: erro ao calcular peso</.error>
-  <.input field={f[:massa]}   type="number" label="Massa" step="any" />
-  <.input field={f[:espaco]}  type="text"   label="Espaco" />
+  <.input field={f[:massa]}       type="number" label="Massa" step="any" style="max-width:400px;"/>
+  <.input field={f[:espaco]}      type="hidden"   label="Espaco" style="max-width:400px;" />
+  <select class="form-control" name="select-espaco" id="select-espaco" style="max-width:400px;" >
+    <option value="Sol">Sol</option>
+    <option value="Terra" selected="selected">Terra</option>
+    <option value="Lua">Lua</option>
+    <option value="Marte">Marte</option>
+  </select>
+  <.input field={f[:peso]}        type="number" label="Peso" style="max-width:400px;" readonly="readonly"/>
+  <.input field={f[:aceleracao]}  type="number" label="Aceleração" style="max-width:400px;" readonly="readonly"/>
   <:actions>
-    <.button class="btn">Calcular peso</.button>
+    <.button disabled="disabled" name="calcular">Calcular peso</.button>
   </:actions>
 </.simple_form>
+
+<script type="text/javascript">
+  $(function() {
+      $('input[name="formula[espaco]"]').val('Terra');
+        if($('input[name="formula[massa]"]').val() !== null && $('input[name="formula[massa]"]').val()  !== ''){
+          $('button[name="calcular"]').removeAttr('disabled');
+        }else{
+          $('button[name="calcular"]').attr('disabled','disabled');
+        }
+      $( 'select[name="select-espaco"]' ).on( "change", function() {
+        var espaco = $( this ).val();
+        $('input[name="formula[espaco]"]').val(espaco);
+      });
+      $( 'input[name="formula[massa]"]' ).on( "change", function() {
+        var massa = $( this ).val();
+        if(massa !== null && massa !== ''){
+          $('button[name="calcular"]').removeAttr('disabled');
+          $('button[name="calcular"]').click();
+        }else{
+          $('button[name="calcular"]').attr('disabled','disabled');
+        }
+      });
+  });
+</script>

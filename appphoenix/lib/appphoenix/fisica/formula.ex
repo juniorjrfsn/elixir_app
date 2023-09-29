@@ -7,6 +7,7 @@ defmodule Appphoenix.Fisica.Formula do
     field :espaco, :string
     field :total, :float
     field :peso, :float
+    field :aceleracao, :float
 
     timestamps()
   end
