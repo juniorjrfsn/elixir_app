@@ -34,7 +34,6 @@ defmodule AppphoenixWeb.CalculoController do
     num2 = elem(Float.parse(calculo_params["campo2"]),0)
     total = num1 + num2
 
-
     #calculo_params = calculo_params | put_param("total", total)
     #Tuple.delete_at(calculo_params, 2)
     #calculo_params["total"] = total
