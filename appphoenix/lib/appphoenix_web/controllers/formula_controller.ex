@@ -22,10 +22,8 @@ defmodule AppphoenixWeb.FormulaController do
   end
 
   def calcpeso(conn, %{"formula" => formula_params}) do
-
     massa = elem(Float.parse(formula_params["massa"]),0)
     espaco =  formula_params["espaco"]
-
     {aceleracao,corpoceleste,peso} = case espaco do
       "Sol"   -> {274.13              , "Sol"     ,(massa * 274.13)               }
       "Terra" -> {9.819649737724951   , "Terra"   ,(massa * 9.819649737724951)    }
@@ -42,7 +40,6 @@ defmodule AppphoenixWeb.FormulaController do
     conn
     |> put_flash(:info, "Calculo created successfully. #{peso} " )
     #  |> redirect(to: ~p"/formula/new")
-
     changeset = Fisica.change_fisica_peso(formula)
     render(conn, :peso, formula: formula, changeset: changeset)
   end
@@ -59,7 +56,7 @@ defmodule AppphoenixWeb.FormulaController do
     massa2    = elem(Float.parse(formula_params["massa2"]),0)
     distancia = elem(Float.parse(formula_params["distancia"]),0)
     fg = (
-        ( (6.67408 * :math.pow(10,-11))* massa1 * massa2 )
+        ( (6.67408 * :math.pow(10,-11)) * massa1 * massa2 )
         /
         :math.pow(distancia,2)
     )
@@ -109,7 +106,6 @@ defmodule AppphoenixWeb.FormulaController do
 
   def update(conn, %{"id" => id, "formula" => formula_params}) do
     formula = Fisica.get_formula!(id)
-
     case Fisica.update_formula(formula, formula_params) do
       {:ok, formula} ->
         conn

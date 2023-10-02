@@ -58,9 +58,7 @@ defmodule AppphoenixWeb.CalculoController do
     #   {:error, %Ecto.Changeset{} = changeset} ->
     #     render(conn, :new, changeset: changeset)
     # end
-
-end
-
+  end
 
   def show(conn, %{"id" => id}) do
     calculo = Calculos.get_calculo!(id)

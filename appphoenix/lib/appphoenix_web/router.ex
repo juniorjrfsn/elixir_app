@@ -25,7 +25,9 @@ defmodule AppphoenixWeb.Router do
     get "/fisica/forcag", FormulaController, :forcag
     post "/fisica/calcforcag", FormulaController, :calcforcag
 
-    get "/hello", HelloController, :index
+    post "/fisica/calcforcag", FormulaController, :calcforcag
+
+    get "/fisica/delete/:id", FormulaController, :delete
 
     resources "/persons", PersonController
     resources "/tasks", TaskController
