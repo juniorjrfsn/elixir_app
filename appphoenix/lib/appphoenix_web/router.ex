@@ -18,8 +18,13 @@ defmodule AppphoenixWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
     get "/fisica/peso", FormulaController, :peso
     post "/fisica/calcpeso", FormulaController, :calcpeso
+
+    get "/fisica/forcag", FormulaController, :forcag
+    post "/fisica/calcforcag", FormulaController, :calcforcag
+
     get "/hello", HelloController, :index
 
     resources "/persons", PersonController

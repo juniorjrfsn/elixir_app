@@ -6,6 +6,15 @@ defmodule Appphoenix.Repo.Migrations.CreateFisica do
       add :massa, :float
       add :espaco, :string
 
+      add :total, :float
+      add :peso, :float
+      add :aceleracao, :float
+      # forcag
+      add :massa1, :float
+      add :massa2, :float
+      add :distancia, :float
+      add :newton, :float
+
       timestamps()
     end
   end

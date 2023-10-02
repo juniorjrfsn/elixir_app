@@ -1,0 +1,41 @@
+<.simple_form :let={f} for={@changeset} action={@action}>
+    <.error :if={@changeset.action}>ERRO: erro ao registrar calculo da força G</.error>
+    <.input field={f[:massa1]}       type="number" label="Massa1"     step="any" style="max-width:400px;"/>
+    <.input field={f[:massa2]}       type="number" label="massa2"     step="any" style="max-width:400px;"/>
+    <.input field={f[:distancia]}    type="number" label="distancia"  step="any" style="max-width:400px;"/>
+    <br>
+    <.input field={f[:newton]}    type="number" label="Força G em newtons" style="max-width:400px;" readonly="readonly"/>
+    <:actions>
+        <.button disabled="disabled" name="calcular">Calcular forca G entre dois corpos</.button>
+    </:actions>
+</.simple_form>
+
+<script type="text/javascript">
+    function verif(){
+        var massa1      = $('input[name="formula[massa1]"]').val();
+        var massa2      = $('input[name="formula[massa2]"]').val();
+        var distancia   = $('input[name="formula[distancia]"]').val();
+        if(massa1 !== null && massa1 !== '' && massa2 !== null && massa2 !== '' && distancia !== null && distancia !== ''){
+            $('button[name="calcular"]').removeAttr('disabled');
+            $('button[name="calcular"]').click();
+        }else{
+            $('button[name="calcular"]').attr('disabled','disabled');
+        }
+    }
+
+    $(function() {
+        if(
+            $('input[name="formula[massa1]"]').val()        !== null && $('input[name="formula[massa1]"]').val()    !== ''
+            && $('input[name="formula[massa2]"]').val()     !== null && $('input[name="formula[massa2]"]').val()    !== ''
+            && $('input[name="formula[distancia]"]').val()  !== null && $('input[name="formula[distancia]"]').val() !== ''
+        ){
+            $('button[name="calcular"]').removeAttr('disabled');
+        }else{
+            $('button[name="calcular"]').attr('disabled','disabled');
+        }
+
+        $( 'input[name="formula[massa1]"]'      ).on( "change", function() {    verif(); });
+        $( 'input[name="formula[massa2]"]'      ).on( "change", function() {    verif(); });
+        $( 'input[name="formula[distancia]"]'   ).on( "change", function() {    verif(); });
+    });
+</script>

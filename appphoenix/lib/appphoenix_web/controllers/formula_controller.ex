@@ -21,7 +21,6 @@ defmodule AppphoenixWeb.FormulaController do
     render(conn, :peso,changeset: changeset)
   end
 
-
   def calcpeso(conn, %{"formula" => formula_params}) do
 
     massa = elem(Float.parse(formula_params["massa"]),0)
@@ -35,9 +34,9 @@ defmodule AppphoenixWeb.FormulaController do
       _ ->       {0                   , "..."     , massa                         }
     end
     formula = %Appphoenix.Fisica.Formula{
-      massa: massa,
+      massa:  massa,
       espaco: espaco,
-      peso: peso,
+      peso:   peso,
       aceleracao: aceleracao
     }
     conn
@@ -46,6 +45,43 @@ defmodule AppphoenixWeb.FormulaController do
 
     changeset = Fisica.change_fisica_peso(formula)
     render(conn, :peso, formula: formula, changeset: changeset)
+  end
+
+  def forcag(conn, _params) do
+    #changeset = Fisica.change_formula(%Formula{})
+    #render(conn, :peso, changeset: changeset)
+    changeset = Fisica.change_fisica_forcag(%Formula{})
+    render(conn, :forcag,changeset: changeset)
+  end
+
+  def calcforcag(conn, %{"formula" => formula_params}) do
+    massa1    = elem(Float.parse(formula_params["massa1"]),0)
+    massa2    = elem(Float.parse(formula_params["massa2"]),0)
+    distancia = elem(Float.parse(formula_params["distancia"]),0)
+    fg = (
+        ( (6.67408 * :math.pow(10,-11))* massa1 * massa2 )
+        /
+        :math.pow(distancia,2)
+    )
+    formula = %Appphoenix.Fisica.Formula{
+      massa:      0.0,
+      espaco:     "...",
+      massa1:     massa1,
+      massa2:     massa2,
+      distancia:  distancia,
+      newton:     fg
+    }
+    changeset = Fisica.change_fisica_forcag(formula)
+    case Fisica.registrar_formula(formula,formula_params) do
+      {:ok, formula} ->
+        conn
+        |> put_flash(:info, "ForcaG registrado successfully. #{fg} ")
+        #|> redirect(to: ~p"/fisica/forcag")
+        #|> redirect(to: ~p"/fisica")
+        render(conn, :forcag, formula: formula, changeset: changeset)
+      {:error, %Ecto.Changeset{} = changeset} ->
+        render(conn, :forcag, changeset: changeset)
+    end
   end
 
   def create(conn, %{"formula" => formula_params}) do

@@ -73,6 +73,12 @@ defmodule Appphoenix.Fisica do
     |> Repo.update()
   end
 
+  def registrar_formula(%Formula{} = formula, attrs) do
+    formula
+    |> Formula.changeset(attrs)
+    |> Repo.insert()
+  end
+
   @doc """
   Deletes a formula.
 
@@ -103,6 +109,10 @@ defmodule Appphoenix.Fisica do
   end
 
   def change_fisica_peso(%Formula{} = formula, attrs \\ %{}) do
+    Formula.changeset(formula, attrs)
+  end
+
+  def change_fisica_forcag(%Formula{} = formula, attrs \\ %{}) do
     Formula.changeset(formula, attrs)
   end
 end
