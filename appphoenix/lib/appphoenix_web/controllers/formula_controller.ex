@@ -38,7 +38,7 @@ defmodule AppphoenixWeb.FormulaController do
       aceleracao: aceleracao
     }
     conn
-    |> put_flash(:info, "Calculo created successfully. #{peso} " )
+    |> put_flash(:info, "Calculo created successfully. #{peso} #{corpoceleste} " )
     #  |> redirect(to: ~p"/formula/new")
     changeset = Fisica.change_fisica_peso(formula)
     render(conn, :peso, formula: formula, changeset: changeset)
