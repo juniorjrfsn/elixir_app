@@ -1,0 +1,9 @@
+<.simple_form :let={f} for={@changeset} action={@action}>
+  <.error :if={@changeset.action}>Oops, something went wrong! Please check the errors below.</.error>
+  <.input field={f[:campo1]}  type="number" label="Campo1"  step="any" />
+  <.input field={f[:campo2]}  type="number" label="Campo2"  step="any" />
+  <.input field={f[:total]}   type="number" label="Total"   step="any" />
+  <:actions>
+    <.button>Save Calculo</.button>
+  </:actions>
+</.simple_form>

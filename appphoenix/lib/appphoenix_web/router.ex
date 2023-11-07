@@ -29,6 +29,9 @@ defmodule AppphoenixWeb.Router do
 
     get "/fisica/delete/:id", FormulaController, :delete
 
+    resources "/hello", HelloController
+    get "/hellomsg/:messenger", HelloController, :show
+
     resources "/persons", PersonController
     resources "/tasks", TaskController
     resources "/post_web", TaskController

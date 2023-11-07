@@ -6,4 +6,9 @@ defmodule AppphoenixWeb.PageController do
     # so skip the default app layout.
     render(conn, :home, layout: false)
   end
+
+  def show(conn, %{"messenger" => messenger}) do
+    render(conn, :show, messenger: messenger)
+  end
+
 end
