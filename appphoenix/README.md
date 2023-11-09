@@ -169,7 +169,6 @@ You can also run your app inside IEx (Interactive Elixir) as:
       http://127.0.0.1:4000/api/persons
       http://127.0.0.1:4000/api/persons/1/
 
-
     # starting in server (Dev)
     $ PORT=4000 MIX_ENV=dev elixir --erl "-detached" -S mix phx.server
 
@@ -257,5 +256,3 @@ You can also run your app inside IEx (Interactive Elixir) as:
       http://127.0.0.1:4001/persons/1
       http://127.0.0.1:4001/api/persons
       http://127.0.0.1:4001/api/persons/1/
-
-      
