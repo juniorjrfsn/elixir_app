@@ -47,6 +47,7 @@ ELIXIR
 ============= PROXY ====================
 mix configure proxy "http://proxy.sgi.ms.gov.br:8081"
 ============= INSTALAÇÃO do phoenix ====================
+mix archive.install github hexpm/hex branch latest
 mix archive.uninstall archive.ez --forceY
 
 mix clean --all
@@ -56,7 +57,7 @@ mix local.hex --force
 
 mix archive.install hex ex_doc
 mix local.hex
-mix archive.install github hexpm/hex branch latest
+
 
 
 --------------------------------------------------------------------------------
