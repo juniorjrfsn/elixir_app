@@ -44,9 +44,13 @@ ERLANG
   apt install esl-erlang
 ELIXIR
 
+============= PROXY ====================
+mix configure proxy "http://proxy.sgi.ms.gov.br:8081"
 ============= INSTALAÇÃO do phoenix ====================
 mix archive.uninstall archive.ez --forceY
 
+mix clean --all
+mix local.rebar --verbose
 mix local.rebar --force
 mix local.hex --force
 
