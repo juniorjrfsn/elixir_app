@@ -76,7 +76,16 @@ Then configure your database in config/dev.exs and run:
   sudo -u postgres psql
   postgres=# ALTER USER postgres WITH PASSWORD 'postgres';
   ALTER ROLE
-  postgres=# create database appphoenix_dev;
+  postgres=#  drop schema  appphoenix_dev;
+              drop schema  appphoenix_prod;
+
+              create schema  appphoenix_dev;
+              grant all privileges on schema  appphoenix_dev to postgres;
+
+              create schema  appphoenix_prod;
+              grant all privileges on schema  appphoenix_prod to postgres;
+
+ 
   CREATE DATABASE
   postgres=# grant all privileges on database appphoenix_dev to postgres;
   GRANT
