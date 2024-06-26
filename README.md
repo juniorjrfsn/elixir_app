@@ -20,3 +20,23 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
   * Docs: https://hexdocs.pm/phoenix
   * Forum: https://elixirforum.com/c/phoenix-forum
   * Source: https://github.com/phoenixframework/phoenix
+
+
+```
+http://junior-ms-7c09.lvh.me/
+
+openssl req -newkey rsa:2048 -nodes -keyout /opt/cert/junior-ms-7c09.lvh.me.key  -out /opt/cert/junior-ms-7c09.lvh.me.crt
+cat /opt/cert/junior-ms-7c09.lvh.me.crt > /opt/cert/junior-ms-7c09.lvh.me.csr
+
+/opt/cert/junior-ms-7c09.lvh.me.crt
+/opt/cert/junior-ms-7c09.lvh.me.key  
+
+#ssl_certificate /opt/cert/junior-ms-7c09.lvh.me.crt;
+#ssl_certificate_key /opt/cert/junior-ms-7c09.lvh.me.key;
+
+ssl_certificate junior-ms-7c09.lvh.me.crt ;
+ssl_certificate_key junior-ms-7c09.lvh.me.key ;
+
+openssl req -newkey rsa:2048 -nodes -keyout  junior-ms-7c09.lvh.me.key  -out  junior-ms-7c09.lvh.me.crt
+cat  junior-ms-7c09.lvh.me.crt >  junior-ms-7c09.lvh.me.csr
+```

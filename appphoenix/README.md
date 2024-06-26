@@ -92,6 +92,7 @@ Then configure your database in config/dev.exs and run:
 
  
   CREATE DATABASE
+  postgres=# create database appphoenix_dev;
   postgres=# grant all privileges on database appphoenix_dev to postgres;
   GRANT
   postgres=# create database appphoenix_prod;
