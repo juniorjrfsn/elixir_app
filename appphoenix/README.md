@@ -128,7 +128,7 @@ config/dev.exs -- configure manualmente
     $ mix ecto.create
 
 Start your Phoenix app with:
-
+    $ mix deps.get
     $ mix phx.server
 
 You can also run your app inside IEx (Interactive Elixir) as:
