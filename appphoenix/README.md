@@ -50,13 +50,28 @@ mix configure proxy "http://proxy.sgi.ms.gov.br:8081"
 mix archive.install github hexpm/hex branch latest
 mix archive.uninstall archive.ez --forceY
 
+mix archive.install github hexpm/hex branch latest
+
 mix clean --all
 mix local.rebar --verbose
 mix local.rebar --force
-mix local.hex --force
 
+curl https://s3.amazonaws.com/rebar3/rebar3
+mix local.rebar rebar3 ./rebar3
+
+
+Invoke-WebRequest  "https://rebar3.org/releases/rebar3-3.15.0-bin.zip" -OutFile "D:\Programas\rebar3-3.15.0-bin.zip"
+
+curl https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Official_Elixir_logo.png/800px-Official_Elixir_logo.png
+Invoke-WebRequest  "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Official_Elixir_logo.png/800px-Official_Elixir_logo.png"
+
+Invoke-WebRequest "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Official_Elixir_logo.png/800px-Official_Elixir_logo.png" -OutFile "D:\Programas\800px-Official_Elixir_logo.png"
+
+
+## mix local.hex --force
 mix archive.install hex ex_doc
-mix local.hex
+## mix local.hex
+mix archive.install github hexpm/hex branch latest
 
 
 
