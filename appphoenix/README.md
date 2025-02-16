@@ -88,6 +88,15 @@ Then configure your database in config/dev.exs and run:
               grant all privileges on schema  appphoenix_prod to postgres;
 
  
+
+GRANT ALL PRIVILEGES ON DATABASE appphoenix_dev TO postgres;
+GRANT CONNECT ON DATABASE appphoenix_dev TO postgres;
+GRANT USAGE ON SCHEMA public TO postgres;  
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres;  
+ 
+
+
+ 
   CREATE DATABASE
   postgres=# create database appphoenix_dev;
   postgres=# grant all privileges on database appphoenix_dev to postgres;
@@ -194,3 +203,97 @@ You can also run your app inside IEx (Interactive Elixir) as:
 
 
     
+
+
+
+
+
+
+
+
+
+
+  ## Produção
+    $ mix phx.gen.secret
+    $ REALLY_LONG_SECRET => PoWY5+8jE5Q3O8i5qf8KrMHOM9FiB3BT/NLrzWWseutEVLNpjhhF66tz7ZlnJ+AG
+    ## $ export SECRET_KEY_BASE=REALLY_LONG_SECRET
+    $ export SECRET_KEY_BASE=PoWY5+8jE5Q3O8i5qf8KrMHOM9FiB3BT/NLrzWWseutEVLNpjhhF66tz7ZlnJ+AG
+    ## $ export DATABASE_URL=ecto://USER:PASS@HOST/database
+    $ export DATABASE_URL=ecto://postgres:postgres@localhost/appphoenix_prod
+    $ mix deps.get --only prod
+    $ MIX_ENV=prod mix compile
+    $ MIX_ENV=prod mix assets.deploy
+    $ mix phx.gen.release
+            Your application is ready to be deployed in a release!
+
+            See https://hexdocs.pm/mix/Mix.Tasks.Release.html for more information about Elixir releases.
+
+            Here are some useful release commands you can run in any release environment:
+
+                # To build a release
+                mix release
+
+                # To start your system with the Phoenix server running
+                _build/dev/rel/appphoenix/bin/server
+
+                # To run migrations
+                _build/dev/rel/appphoenix/bin/migrate
+
+            Once the release is running you can connect to it remotely:
+
+                _build/dev/rel/appphoenix/bin/appphoenix remote
+
+            To list all commands:
+
+                _build/dev/rel/appphoenix/bin/appphoenix
+
+    $ MIX_ENV=prod mix release
+          Release appphoenix-0.1.0 already exists. Overwrite? [Yn] Y
+          * assembling appphoenix-0.1.0 on MIX_ENV=prod
+          * using config/runtime.exs to configure the release at runtime
+          * skipping elixir.bat for windows (bin/elixir.bat not found in the Elixir installation)
+          * skipping iex.bat for windows (bin/iex.bat not found in the Elixir installation)
+
+          Release created at _build/prod/rel/appphoenix
+
+              # To start your system
+              _build/prod/rel/appphoenix/bin/appphoenix start
+
+          Once the release is running:
+
+              # To connect to it remotely
+              _build/prod/rel/appphoenix/bin/appphoenix remote
+
+              # To stop it gracefully (you may also send SIGINT/SIGTERM)
+              _build/prod/rel/appphoenix/bin/appphoenix stop
+
+          To list all commands:
+
+              _build/prod/rel/appphoenix/bin/appphoenix
+
+    $ MIX_ENV=prod mix ecto.migrate
+    #teste
+    $ PORT=4001 MIX_ENV=prod mix phx.server
+
+    # Initial setup
+    mix deps.get --only prod
+    MIX_ENV=prod mix compile
+
+    # Compile assets
+    MIX_ENV=prod mix assets.deploy
+
+    # Custom tasks (like DB migrations)
+    MIX_ENV=prod mix ecto.migrate
+
+    # Finally run the server
+    PORT=4001 MIX_ENV=prod mix phx.server
+  -- http://localhost:4001
+
+
+    # starting in server (Produção)
+    $ PORT=4001 MIX_ENV=prod elixir --erl "-detached" -S mix phx.server
+
+      http://127.0.0.1:4001/persons
+      http://127.0.0.1:4001/persons/1
+      http://127.0.0.1:4001/api/persons
+      http://127.0.0.1:4001/api/persons/1/
