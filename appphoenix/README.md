@@ -16,27 +16,9 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
   * Docs: https://hexdocs.pm/phoenix
   * Forum: https://elixirforum.com/c/phoenix-forum
   * Source: https://github.com/phoenixframework/phoenix
-# Appphoenix
-
-To start your Phoenix server:
-
-  * Run `mix setup` to install and setup dependencies
-  * Start Phoenix endpoint with `mix phx.server` or inside IEx with `iex -S mix phx.server`
-
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
-
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
-
-## Learn more
-
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
 
 
-# Create PhoenixFramework app
+ # Create PhoenixFramework app
 
 ## INSTALL
 POSTGRES
@@ -62,6 +44,7 @@ mix local.rebar rebar3 ./rebar3
 
 Invoke-WebRequest  "https://rebar3.org/releases/rebar3-3.15.0-bin.zip" -OutFile "D:\Programas\rebar3-3.15.0-bin.zip"
 
+
 curl https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Official_Elixir_logo.png/800px-Official_Elixir_logo.png
 Invoke-WebRequest  "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Official_Elixir_logo.png/800px-Official_Elixir_logo.png"
 
@@ -72,7 +55,6 @@ Invoke-WebRequest "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Off
 mix archive.install hex ex_doc
 ## mix local.hex
 mix archive.install github hexpm/hex branch latest
-
 
 
 --------------------------------------------------------------------------------
@@ -127,6 +109,10 @@ config/dev.exs -- configure manualmente
 
     $ mix ecto.create
 
+
+
+
+
 Start your Phoenix app with:
     $ mix deps.get
     $ mix phx.server
@@ -134,6 +120,8 @@ Start your Phoenix app with:
 You can also run your app inside IEx (Interactive Elixir) as:
 
     $ iex -S mix phx.server
+
+# geração de controllers com conexão com banco de dados
 
     https://hexdocs.pm/phoenix/json_and_apis.html
     mix phx.gen.json Postsservice Postservice posts title:string body:text
@@ -166,7 +154,6 @@ You can also run your app inside IEx (Interactive Elixir) as:
     mix phx.gen.html Calculos  Calculo  calculos campo1:float campo2:float total:float
 
  
-
 
     # router.ex
       "
@@ -205,87 +192,5 @@ You can also run your app inside IEx (Interactive Elixir) as:
     # starting in server (Dev)
     $ PORT=4000 MIX_ENV=dev elixir --erl "-detached" -S mix phx.server
 
-  ## Produção
-    $ mix phx.gen.secret
-    $ REALLY_LONG_SECRET => PoWY5+8jE5Q3O8i5qf8KrMHOM9FiB3BT/NLrzWWseutEVLNpjhhF66tz7ZlnJ+AG
-    ## $ export SECRET_KEY_BASE=REALLY_LONG_SECRET
-    $ export SECRET_KEY_BASE=PoWY5+8jE5Q3O8i5qf8KrMHOM9FiB3BT/NLrzWWseutEVLNpjhhF66tz7ZlnJ+AG
-    ## $ export DATABASE_URL=ecto://USER:PASS@HOST/database
-    $ export DATABASE_URL=ecto://postgres:postgres@localhost/appphoenix_prod
-    $ mix deps.get --only prod
-    $ MIX_ENV=prod mix compile
-    $ MIX_ENV=prod mix assets.deploy
-    $ mix phx.gen.release
-            Your application is ready to be deployed in a release!
 
-            See https://hexdocs.pm/mix/Mix.Tasks.Release.html for more information about Elixir releases.
-
-            Here are some useful release commands you can run in any release environment:
-
-                # To build a release
-                mix release
-
-                # To start your system with the Phoenix server running
-                _build/dev/rel/appphoenix/bin/server
-
-                # To run migrations
-                _build/dev/rel/appphoenix/bin/migrate
-
-            Once the release is running you can connect to it remotely:
-
-                _build/dev/rel/appphoenix/bin/appphoenix remote
-
-            To list all commands:
-
-                _build/dev/rel/appphoenix/bin/appphoenix
-
-    $ MIX_ENV=prod mix release
-          Release appphoenix-0.1.0 already exists. Overwrite? [Yn] Y
-          * assembling appphoenix-0.1.0 on MIX_ENV=prod
-          * using config/runtime.exs to configure the release at runtime
-          * skipping elixir.bat for windows (bin/elixir.bat not found in the Elixir installation)
-          * skipping iex.bat for windows (bin/iex.bat not found in the Elixir installation)
-
-          Release created at _build/prod/rel/appphoenix
-
-              # To start your system
-              _build/prod/rel/appphoenix/bin/appphoenix start
-
-          Once the release is running:
-
-              # To connect to it remotely
-              _build/prod/rel/appphoenix/bin/appphoenix remote
-
-              # To stop it gracefully (you may also send SIGINT/SIGTERM)
-              _build/prod/rel/appphoenix/bin/appphoenix stop
-
-          To list all commands:
-
-              _build/prod/rel/appphoenix/bin/appphoenix
-
-    $ MIX_ENV=prod mix ecto.migrate
-    #teste
-    $ PORT=4001 MIX_ENV=prod mix phx.server
-
-    # Initial setup
-    mix deps.get --only prod
-    MIX_ENV=prod mix compile
-
-    # Compile assets
-    MIX_ENV=prod mix assets.deploy
-
-    # Custom tasks (like DB migrations)
-    MIX_ENV=prod mix ecto.migrate
-
-    # Finally run the server
-    PORT=4001 MIX_ENV=prod mix phx.server
-  -- http://localhost:4001
-
-
-    # starting in server (Produção)
-    $ PORT=4001 MIX_ENV=prod elixir --erl "-detached" -S mix phx.server
-
-      http://127.0.0.1:4001/persons
-      http://127.0.0.1:4001/persons/1
-      http://127.0.0.1:4001/api/persons
-      http://127.0.0.1:4001/api/persons/1/
+    

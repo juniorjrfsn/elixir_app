@@ -1,0 +1,25 @@
+<.header>
+  Listing Calculos
+  <:actions>
+    <.link href={~p"/calculos/new"}>
+      <.button>New Calculo</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="calculos" rows={@calculos} row_click={&JS.navigate(~p"/calculos/#{&1}")}>
+  <:col :let={calculo} label="Campo1">{calculo.campo1}</:col>
+  <:col :let={calculo} label="Campo2">{calculo.campo2}</:col>
+  <:col :let={calculo} label="Total">{calculo.total}</:col>
+  <:action :let={calculo}>
+    <div class="sr-only">
+      <.link navigate={~p"/calculos/#{calculo}"}>Show</.link>
+    </div>
+    <.link navigate={~p"/calculos/#{calculo}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={calculo}>
+    <.link href={~p"/calculos/#{calculo}"} method="delete" data-confirm="Are you sure?">
+      Delete
+    </.link>
+  </:action>
+</.table>
