@@ -165,6 +165,10 @@ You can also run your app inside IEx (Interactive Elixir) as:
     # mas prefiro gerar completo
     mix phx.gen.html Calculos  Calculo  calculos campo1:float campo2:float total:float
 
+
+    mix ecto.gen.migration create_peso_table
+
+
     # router.ex
       "
     scope "/", appphoenixWeb do

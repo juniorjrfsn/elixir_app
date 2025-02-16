@@ -2,7 +2,7 @@ defmodule AppphoenixWeb.HelloController do
     use AppphoenixWeb, :controller
 
     alias Appphoenix.Hellos
-    alias Appphoenix.Hellos.Hello
+    #alias Appphoenix.Hellos.Hello
 
     def index(conn, _params) do
         render(conn, :index, layout: false)
