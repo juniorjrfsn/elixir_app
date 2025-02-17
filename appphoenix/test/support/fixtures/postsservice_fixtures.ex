@@ -18,4 +18,19 @@ defmodule Appphoenix.PostsserviceFixtures do
 
     postservice
   end
+
+  @doc """
+  Generate a postservice.
+  """
+  def postservice_fixture(attrs \\ %{}) do
+    {:ok, postservice} =
+      attrs
+      |> Enum.into(%{
+        body: "some body",
+        title: "some title"
+      })
+      |> Appphoenix.Postsservice.create_postservice()
+
+    postservice
+  end
 end

@@ -19,13 +19,13 @@ defmodule AppphoenixWeb.Router do
 
     get "/", PageController, :home
 
-    get "/fisica/peso", FormulaController, :peso
-    post "/fisica/calcpeso", FormulaController, :calcpeso
+    # get "/fisica/peso", FormulaController, :peso
+    # post "/fisica/calcpeso", FormulaController, :calcpeso
 
-    get "/fisica/forcag", FormulaController, :forcag
-    post "/fisica/calcforcag", FormulaController, :calcforcag
+    # get "/fisica/forcag", FormulaController, :forcag
+    # post "/fisica/calcforcag", FormulaController, :calcforcag
 
-    get "/fisica/delete/:id", FormulaController, :delete
+    # get "/fisica/delete/:id", FormulaController, :delete
 
     # resources "/hello", HelloController
     # get "/hellomsg/:messenger", HelloController, :show
@@ -35,7 +35,7 @@ defmodule AppphoenixWeb.Router do
     resources "/post_web", TaskController
     resources "/posts", PostController
     resources "/calculos", CalculoController
-    resources "/fisica", FormulaController
+    # resources "/fisica", FormulaController
 
 
   end
@@ -43,7 +43,7 @@ defmodule AppphoenixWeb.Router do
   scope "/api", AppphoenixWeb do
     pipe_through :api
     resources "/posts", PostController, except: [:new, :edit]
-    resources "/persons", PessoaController, except: [:new, :edit]
+    #resources "/persons", PessoaController, except: [:new, :edit]
   end
 
   # Other scopes may use custom stacks.
