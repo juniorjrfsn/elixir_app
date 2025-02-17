@@ -74,82 +74,32 @@ Then configure your database in config/dev.exs and run:
    https://www.postgresql.org/docs/8.0/sql-createuser.html
    sudo -u postgres psql
 
-
   sudo -u postgres psql
   postgres=# ALTER USER postgres WITH PASSWORD 'postgres';
   ALTER ROLE
   postgres=#  
-              GRANT USAGE ON SCHEMA public TO postgres;  
-              GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres;  
-              ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO postgres;
-              
-              ### DROP DATABASE ###
-              DROP DATABASE IF EXISTS appphoenix_dev;
-              DROP DATABASE IF EXISTS appphoenix_prod;
+    ### DROP DATABASE ###
+    DROP DATABASE IF EXISTS appphoenix_dev;
+    DROP DATABASE IF EXISTS appphoenix_prod;
 
-              ### DROP SCHEMA ###
-              DROP SCHEMA IF EXISTS appphoenix_dev;
-              DROP SCHEMA IF EXISTS appphoenix_prod;
+    ### DROP SCHEMA ###
+    DROP SCHEMA IF EXISTS appphoenix_dev;
+    DROP SCHEMA IF EXISTS appphoenix_prod;
 
-              ### CREATE SCHEMA ###
-              CREATE SCHEMA  appphoenix_dev;
-              CREATE SCHEMA  appphoenix_prod;
- 
-              ### CREATE DATABASE ###
-              CREATE DATABASE appphoenix_dev;
-              CREATE DATABASE appphoenix_prod;
+    ### CREATE SCHEMA ###
+    CREATE SCHEMA  appphoenix_dev;
+    CREATE SCHEMA  appphoenix_prod;
 
-              ### GRANT ###
-              GRANT ALL PRIVILEGES ON DATABASE appphoenix_dev TO postgres;
-              GRANT CONNECT ON DATABASE appphoenix_dev TO postgres;
-              GRANT ALL PRIVILEGES ON DATABASE appphoenix_prod TO postgres;
-              GRANT CONNECT ON DATABASE appphoenix_prod TO postgres;
- 
-              GRANT ALL PRIVILEGES ON SCHEMA appphoenix_dev TO postgres;
-              GRANT USAGE ON SCHEMA appphoenix_dev TO postgres;
-              ALTER DEFAULT PRIVILEGES IN SCHEMA appphoenix_dev GRANT ALL PRIVILEGES ON TABLES TO postgres;
-              GRANT ALL PRIVILEGES ON SCHEMA appphoenix_prod TO postgres;
-              GRANT USAGE ON SCHEMA appphoenix_prod TO postgres;
-              ALTER DEFAULT PRIVILEGES IN SCHEMA appphoenix_prod GRANT ALL PRIVILEGES ON TABLES TO postgres;
-
-
-              GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA appphoenix_dev TO postgres;
-              GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA appphoenix_prod TO postgres;
+    ### CREATE DATABASE ###
+    CREATE DATABASE appphoenix_dev;
+    CREATE DATABASE appphoenix_prod;
     
-              GRANT ALL PRIVILEGES ON SCHEMA  appphoenix_dev TO postgres;
-              GRANT ALL PRIVILEGES ON SCHEMA  appphoenix_prod TO postgres;
-              
-              GRANT USAGE ON SCHEMA appphoenix_dev TO postgres;  
-              GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA appphoenix_dev TO postgres;  
-              ALTER DEFAULT PRIVILEGES IN SCHEMA appphoenix_dev GRANT ALL PRIVILEGES ON TABLES TO postgres;
+    ### GRANT ###
+    README_POSTGRES.md    
 
-              GRANT USAGE ON SCHEMA appphoenix_prod TO postgres;  
-              GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA appphoenix_prod TO postgres;  
-              ALTER DEFAULT PRIVILEGES IN SCHEMA appphoenix_prod GRANT ALL PRIVILEGES ON TABLES TO postgres;
-
-              CREATE DATABASE
-              postgres=# create database appphoenix_dev;
-              postgres=# grant all privileges on database appphoenix_dev to postgres;
-              GRANT
-              postgres=# create database appphoenix_prod;
-              CREATE DATABASE
-              postgres=# grant all privileges on database appphoenix_prod to postgres;
-              GRANT
-
-  postgres=#
-
-
-postgres
-  https://www.pgadmin.org/download/pgadmin-4-apt/
-  OU
-  DBEAVER localhost 5432 appphoenix_dev postgres 'postgres'
-
-config/dev.exs -- configure manualmente
+    config/dev.exs -- configure manualmente
 
     $ mix ecto.create
-
-
-
 
 
 Start your Phoenix app with:
