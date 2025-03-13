@@ -71,14 +71,14 @@ defmodule ColorClassifier do
   # Forward Propagation
   defp forward(inputs, weights_input_hidden, weights_hidden_output, bias_hidden, bias_output) do
     hidden_inputs =
-      Enum.zip_with(weights_input_hidden, fn row ->
+      Enum.map(weights_input_hidden, fn row ->
         dot_product(row, inputs) + Enum.sum(bias_hidden)
       end)
 
     hidden_outputs = Enum.map(hidden_inputs, &relu/1)
 
     output_inputs =
-      Enum.zip_with(weights_hidden_output, fn row ->
+      Enum.map(weights_hidden_output, fn row ->
         dot_product(row, hidden_outputs) + Enum.sum(bias_output)
       end)
 
@@ -112,8 +112,9 @@ defmodule ColorClassifier do
     # Calculate hidden errors
     hidden_errors =
       Enum.map(weights_hidden_output, fn row ->
-        dot_product(row, output_errors) * relu_derivative(Enum.at(hidden_outputs, 0))
+        dot_product(row, output_errors)
       end)
+      |> Enum.zip_with(hidden_outputs, fn error, output -> error * relu_derivative(output) end)
 
     # Update weights_hidden_output and bias_output
     weights_hidden_output =
@@ -203,7 +204,18 @@ defmodule ColorClassifier do
             end)
             |> Enum.sum()
 
-          IO.puts("Epoch #{epoch} | Loss: #{Float.round(loss, 4)}")
+          accuracy =
+            Enum.zip(inputs, targets)
+            |> Enum.map(fn {inp, tgt} ->
+              {_, outputs} = forward(inp, wih, who, bh, bo)
+              predicted = Enum.max_by(Enum.with_index(outputs), fn {val, _} -> val end) |> elem(1)
+              expected = Enum.max_by(Enum.with_index(tgt), fn {val, _} -> val end) |> elem(1)
+              if predicted == expected, do: 1, else: 0
+            end)
+            |> Enum.sum()
+            |> Kernel./(length(inputs))
+
+          IO.puts("Epoch #{epoch} | Loss: #{Float.round(loss, 4)} | Accuracy: #{Float.round(accuracy * 100, 2)}%")
         end
 
         {wih, who, bh, bo}
@@ -224,8 +236,10 @@ defmodule ColorClassifier do
     inputs = Enum.map(rgb, &(&1 / 255.0))
     {_, outputs} = forward(inputs, weights_input_hidden, weights_hidden_output, bias_hidden, bias_output)
     max_idx = Enum.max_by(Enum.with_index(outputs), fn {val, _} -> val end) |> elem(1)
-    predicted = Enum.at(colors, max_idx)
-    confidence = Enum.at(outputs, max_idx) * 100
+
+    # Ensure valid prediction
+    predicted = if max_idx != nil and max_idx < length(colors), do: Enum.at(colors, max_idx), else: "Desconhecido"
+    confidence = Enum.at(outputs, max_idx || 0) * 100
     {predicted, confidence}
   end
 
