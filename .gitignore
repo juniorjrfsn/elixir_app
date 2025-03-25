@@ -1,2 +1,5 @@
 IA/_build
 IA/deps
+
+cnn/cnn_reconhece_texto/_build
+cnn/cnn_reconhece_texto/deps
