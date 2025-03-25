@@ -1,0 +1,1 @@
+# file: lib/cnn_reconhece_texto/utils/file_handling.ex
