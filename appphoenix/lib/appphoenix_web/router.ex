@@ -2,48 +2,25 @@ defmodule AppphoenixWeb.Router do
   use AppphoenixWeb, :router
 
   pipeline :browser do
-    plug :accepts, ["html"]
-    plug :fetch_session
-    plug :fetch_live_flash
-    plug :put_root_layout, html: {AppphoenixWeb.Layouts, :root}
-    plug :protect_from_forgery
-    plug :put_secure_browser_headers
+    plug(:accepts, ["html"])
+    plug(:fetch_session)
+    plug(:fetch_live_flash)
+    plug(:put_root_layout, html: {AppphoenixWeb.Layouts, :root})
+    plug(:protect_from_forgery)
+    plug(:put_secure_browser_headers)
   end
 
   pipeline :api do
-    plug :accepts, ["json"]
+    plug(:accepts, ["json"])
   end
 
   scope "/", AppphoenixWeb do
-    pipe_through :browser
+    pipe_through(:browser)
 
-    get "/", PageController, :home
+    get("/", PageController, :home)
 
-    # get "/fisica/peso", FormulaController, :peso
-    # post "/fisica/calcpeso", FormulaController, :calcpeso
-
-    # get "/fisica/forcag", FormulaController, :forcag
-    # post "/fisica/calcforcag", FormulaController, :calcforcag
-
-    # get "/fisica/delete/:id", FormulaController, :delete
-
-    # resources "/hello", HelloController
-    # get "/hellomsg/:messenger", HelloController, :show
-
-    resources "/persons", PersonController
-    resources "/tasks", TaskController
-    resources "/post_web", TaskController
-    resources "/posts", PostController
-    resources "/calculos", CalculoController
-    # resources "/fisica", FormulaController
-
-
-  end
-
-  scope "/api", AppphoenixWeb do
-    pipe_through :api
-    resources "/posts", PostController, except: [:new, :edit]
-    #resources "/persons", PessoaController, except: [:new, :edit]
+    get("/upload", ImageController, :new)
+    post("/upload", ImageController, :create)
   end
 
   # Other scopes may use custom stacks.
@@ -61,10 +38,10 @@ defmodule AppphoenixWeb.Router do
     import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
-      pipe_through :browser
+      pipe_through(:browser)
 
-      live_dashboard "/dashboard", metrics: AppphoenixWeb.Telemetry
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
+      live_dashboard("/dashboard", metrics: AppphoenixWeb.Telemetry)
+      forward("/mailbox", Plug.Swoosh.MailboxPreview)
     end
   end
 end

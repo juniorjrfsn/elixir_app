@@ -1,3 +1,5 @@
+## Projeto : IA
+# # file : IA/mix.exs
 defmodule ColorClassifier.MixProject do
   use Mix.Project
 
@@ -16,8 +18,6 @@ defmodule ColorClassifier.MixProject do
       extra_applications: [:logger]
     ]
   end
-
-
 
   defp deps do
     [

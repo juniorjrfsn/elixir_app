@@ -1,5 +1,6 @@
 IA/_build
 IA/deps
-
+appphoenix/_build
+appphoenix/deps
 cnn/cnn_reconhece_texto/_build
 cnn/cnn_reconhece_texto/deps

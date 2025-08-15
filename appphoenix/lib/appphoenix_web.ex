@@ -38,9 +38,7 @@ defmodule AppphoenixWeb do
 
   def controller do
     quote do
-      use Phoenix.Controller,
-        formats: [:html, :json],
-        layouts: [html: AppphoenixWeb.Layouts]
+      use Phoenix.Controller, formats: [:html, :json]
 
       use Gettext, backend: AppphoenixWeb.Gettext
 
@@ -52,8 +50,7 @@ defmodule AppphoenixWeb do
 
   def live_view do
     quote do
-      use Phoenix.LiveView,
-        layout: {AppphoenixWeb.Layouts, :app}
+      use Phoenix.LiveView
 
       unquote(html_helpers())
     end
@@ -90,8 +87,9 @@ defmodule AppphoenixWeb do
       # Core UI components
       import AppphoenixWeb.CoreComponents
 
-      # Shortcut for generating JS commands
+      # Common modules used in templates
       alias Phoenix.LiveView.JS
+      alias AppphoenixWeb.Layouts
 
       # Routes generation with the ~p sigil
       unquote(verified_routes())

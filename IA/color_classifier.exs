@@ -1,3 +1,5 @@
+## Projeto : IA
+# file : IA/color_classifier.exs
 defmodule ColorClassifier do
   # Training Data
   @training_data [
@@ -28,20 +30,23 @@ defmodule ColorClassifier do
   ]
 
   # Activation Functions
-  defp relu(x), do: max(0, x)
-  defp relu_derivative(x), do: if(x > 0, do: 1, else: 0)
+  defp relu(x), do: max(0.0, x)
+  defp relu_derivative(x), do: if(x > 0, do: 1.0, else: 0.0)
 
   # Softmax Function (Stable)
   defp softmax(output) do
-    max = Enum.max(output)
-    exps = Enum.map(output, &:math.exp(&1 - max))
+    max_val = Enum.max(output)
+    exps = Enum.map(output, fn x -> :math.exp(x - max_val) end)
     sum = Enum.sum(exps)
-    Enum.map(exps, &(&1 / sum))
+    if sum > 0, do: Enum.map(exps, fn x -> x / sum end), else: output
   end
 
   # Cross-Entropy Loss
   defp cross_entropy_loss(target, output) do
-    -Enum.sum(Enum.zip_with(target, output, fn t, o -> t * :math.log(max(o, 1.0e-10)) end))
+    Enum.zip_with(target, output, fn t, o ->
+      -t * :math.log(max(o, 1.0e-15))
+    end)
+    |> Enum.sum()
   end
 
   # Initialize Weights and Biases (Xavier/Glorot Initialization)
@@ -49,16 +54,18 @@ defmodule ColorClassifier do
     :rand.seed(:exrop, :erlang.timestamp())
 
     weights_input_hidden =
-      for _ <- 1..input_size do
-        for _ <- 1..hidden_size do
-          :rand.uniform() * 2 / :math.sqrt(input_size + hidden_size) - 1 / :math.sqrt(input_size + hidden_size)
+      for _ <- 1..hidden_size do
+        for _ <- 1..input_size do
+          limit = :math.sqrt(6.0 / (input_size + hidden_size))
+          (:rand.uniform() - 0.5) * 2 * limit
         end
       end
 
     weights_hidden_output =
-      for _ <- 1..hidden_size do
-        for _ <- 1..output_size do
-          :rand.uniform() * 2 / :math.sqrt(hidden_size + output_size) - 1 / :math.sqrt(hidden_size + output_size)
+      for _ <- 1..output_size do
+        for _ <- 1..hidden_size do
+          limit = :math.sqrt(6.0 / (hidden_size + output_size))
+          (:rand.uniform() - 0.5) * 2 * limit
         end
       end
 
@@ -68,28 +75,34 @@ defmodule ColorClassifier do
     {weights_input_hidden, weights_hidden_output, bias_hidden, bias_output}
   end
 
-  # Forward Propagation
-  defp forward(inputs, weights_input_hidden, weights_hidden_output, bias_hidden, bias_output) do
-    hidden_inputs =
-      Enum.map(weights_input_hidden, fn row ->
-        dot_product(row, inputs) + Enum.sum(bias_hidden)
-      end)
-
-    hidden_outputs = Enum.map(hidden_inputs, &relu/1)
-
-    output_inputs =
-      Enum.map(weights_hidden_output, fn row ->
-        dot_product(row, hidden_outputs) + Enum.sum(bias_output)
-      end)
-
-    outputs = softmax(output_inputs)
-
-    {hidden_outputs, outputs}
-  end
-
   # Dot Product
   defp dot_product(vec1, vec2) do
-    Enum.zip(vec1, vec2) |> Enum.map(fn {a, b} -> a * b end) |> Enum.sum()
+    Enum.zip_with(vec1, vec2, fn a, b -> a * b end) |> Enum.sum()
+  end
+
+  # Matrix-Vector Multiplication
+  defp mat_vec_mult(matrix, vector) do
+    Enum.map(matrix, fn row -> dot_product(row, vector) end)
+  end
+
+  # Vector Addition
+  defp vec_add(vec1, vec2) do
+    Enum.zip_with(vec1, vec2, fn a, b -> a + b end)
+  end
+
+  # Forward Propagation
+  defp forward(inputs, weights_input_hidden, weights_hidden_output, bias_hidden, bias_output) do
+    # Hidden layer
+    hidden_inputs = mat_vec_mult(weights_input_hidden, inputs)
+    hidden_inputs_with_bias = vec_add(hidden_inputs, bias_hidden)
+    hidden_outputs = Enum.map(hidden_inputs_with_bias, &relu/1)
+
+    # Output layer
+    output_inputs = mat_vec_mult(weights_hidden_output, hidden_outputs)
+    output_inputs_with_bias = vec_add(output_inputs, bias_output)
+    outputs = softmax(output_inputs_with_bias)
+
+    {hidden_outputs, outputs}
   end
 
   # Backpropagation and Weight Updates
@@ -106,35 +119,54 @@ defmodule ColorClassifier do
     {hidden_outputs, outputs} =
       forward(inputs, weights_input_hidden, weights_hidden_output, bias_hidden, bias_output)
 
-    # Calculate output errors
-    output_errors = Enum.zip_with(outputs, target, &(&2 - &1))
+    # Calculate output layer gradients
+    output_errors = Enum.zip_with(target, outputs, fn t, o -> o - t end)
 
-    # Calculate hidden errors
+    # Calculate hidden layer gradients
     hidden_errors =
-      Enum.map(weights_hidden_output, fn row ->
-        dot_product(row, output_errors)
-      end)
-      |> Enum.zip_with(hidden_outputs, fn error, output -> error * relu_derivative(output) end)
+      Enum.with_index(hidden_outputs)
+      |> Enum.map(fn {h, i} ->
+        error =
+          Enum.with_index(weights_hidden_output)
+          |> Enum.map(fn {row, _} -> Enum.at(row, i) end)
+          |> dot_product(output_errors)
 
-    # Update weights_hidden_output and bias_output
-    weights_hidden_output =
-      Enum.zip_with(weights_hidden_output, hidden_errors, fn row, error ->
-        Enum.zip_with(row, hidden_outputs, fn w, h -> w + learning_rate * error * h end)
-      end)
-
-    bias_output =
-      Enum.zip_with(bias_output, output_errors, fn b, e -> b + learning_rate * e end)
-
-    # Update weights_input_hidden and bias_hidden
-    weights_input_hidden =
-      Enum.zip_with(weights_input_hidden, hidden_errors, fn row, error ->
-        Enum.zip_with(row, inputs, fn w, i -> w + learning_rate * error * i end)
+        error * relu_derivative(h)
       end)
 
-    bias_hidden =
-      Enum.zip_with(bias_hidden, hidden_errors, fn b, e -> b + learning_rate * e end)
+    # Update weights and biases for output layer
+    new_weights_hidden_output =
+      Enum.with_index(weights_hidden_output)
+      |> Enum.map(fn {row, i} ->
+        error = Enum.at(output_errors, i)
 
-    {weights_input_hidden, weights_hidden_output, bias_hidden, bias_output}
+        Enum.zip_with(row, hidden_outputs, fn w, h ->
+          w - learning_rate * error * h
+        end)
+      end)
+
+    new_bias_output =
+      Enum.zip_with(bias_output, output_errors, fn b, e ->
+        b - learning_rate * e
+      end)
+
+    # Update weights and biases for hidden layer
+    new_weights_input_hidden =
+      Enum.with_index(weights_input_hidden)
+      |> Enum.map(fn {row, i} ->
+        error = Enum.at(hidden_errors, i)
+
+        Enum.zip_with(row, inputs, fn w, inp ->
+          w - learning_rate * error * inp
+        end)
+      end)
+
+    new_bias_hidden =
+      Enum.zip_with(bias_hidden, hidden_errors, fn b, e ->
+        b - learning_rate * e
+      end)
+
+    {new_weights_input_hidden, new_weights_hidden_output, new_bias_hidden, new_bias_output}
   end
 
   # Save Model to Binary File
@@ -142,10 +174,13 @@ defmodule ColorClassifier do
     File.mkdir_p!(Path.dirname(path))
 
     # Serialize the model and colors into binary format
-    data = {model[:weights_input_hidden], model[:weights_hidden_output], model[:bias_hidden], model[:bias_output], colors}
+    data =
+      {model[:weights_input_hidden], model[:weights_hidden_output], model[:bias_hidden],
+       model[:bias_output], colors}
+
     binary_data = :erlang.term_to_binary(data)
     File.write!(path, binary_data)
-    IO.puts("Model saved to #{path}")
+    IO.puts("Modelo salvo em #{path}")
   end
 
   # Load Model from Binary File
@@ -157,24 +192,24 @@ defmodule ColorClassifier do
             {{wih, who, bh, bo}, colors}
 
           _ ->
-            IO.puts("Error loading model: Invalid file format")
+            IO.puts("Erro ao carregar modelo: formato de arquivo inválido")
             nil
         end
 
       {:error, reason} ->
-        IO.puts("Error loading model: #{reason}")
+        IO.puts("Erro ao carregar modelo: #{reason}")
         nil
     end
   end
 
   # Train the Model
-  def train_model(epochs \\ 20_000, learning_rate \\ 0.01) do
+  def train_model(epochs \\ 5000, learning_rate \\ 0.1) do
     colors = Enum.map(@training_data, &elem(&1, 1)) |> Enum.uniq() |> Enum.sort()
     color_idx = Enum.with_index(colors) |> Map.new()
 
     inputs =
       Enum.map(@training_data, fn {rgb, _} ->
-        Enum.map(rgb, &(&1 / 255.0))
+        Enum.map(rgb, fn x -> x / 255.0 end)
       end)
 
     targets =
@@ -184,63 +219,146 @@ defmodule ColorClassifier do
       end)
 
     {weights_input_hidden, weights_hidden_output, bias_hidden, bias_output} =
-      initialize_weights(3, 64, length(colors))
+      initialize_weights(3, 32, length(colors))
 
-    IO.puts("Training new model...")
+    IO.puts("Treinando novo modelo...")
+    IO.puts("Épocas: #{epochs}, Taxa de aprendizado: #{learning_rate}")
+    IO.puts("Classes: #{inspect(colors)}")
 
-    {wih, who, bh, bo} =
-      Enum.reduce(1..epochs, {weights_input_hidden, weights_hidden_output, bias_hidden, bias_output}, fn epoch, {wih, who, bh, bo} ->
-        Enum.zip(inputs, targets)
-        |> Enum.reduce({wih, who, bh, bo}, fn {inp, tgt}, acc ->
-          train_step(inp, tgt, elem(acc, 0), elem(acc, 1), elem(acc, 2), elem(acc, 3), learning_rate)
-        end)
+    {final_wih, final_who, final_bh, final_bo} =
+      Enum.reduce(
+        1..epochs,
+        {weights_input_hidden, weights_hidden_output, bias_hidden, bias_output},
+        fn epoch, {wih, who, bh, bo} ->
+          # Embaralhar dados de treinamento
+          shuffled_data = Enum.zip(inputs, targets) |> Enum.shuffle()
 
-        if rem(epoch, 1000) == 0 do
-          loss =
-            Enum.zip(inputs, targets)
-            |> Enum.map(fn {inp, tgt} ->
-              {_, outputs} = forward(inp, wih, who, bh, bo)
-              cross_entropy_loss(tgt, outputs)
+          # Treinar com todos os exemplos
+          {new_wih, new_who, new_bh, new_bo} =
+            Enum.reduce(shuffled_data, {wih, who, bh, bo}, fn {inp, tgt}, {w1, w2, b1, b2} ->
+              train_step(inp, tgt, w1, w2, b1, b2, learning_rate)
             end)
-            |> Enum.sum()
 
-          accuracy =
-            Enum.zip(inputs, targets)
-            |> Enum.map(fn {inp, tgt} ->
-              {_, outputs} = forward(inp, wih, who, bh, bo)
-              predicted = Enum.max_by(Enum.with_index(outputs), fn {val, _} -> val end) |> elem(1)
-              expected = Enum.max_by(Enum.with_index(tgt), fn {val, _} -> val end) |> elem(1)
-              if predicted == expected, do: 1, else: 0
-            end)
-            |> Enum.sum()
-            |> Kernel./(length(inputs))
+          # Mostrar progresso
+          if rem(epoch, 500) == 0 do
+            total_loss =
+              Enum.zip(inputs, targets)
+              |> Enum.map(fn {inp, tgt} ->
+                {_, outputs} = forward(inp, new_wih, new_who, new_bh, new_bo)
+                cross_entropy_loss(tgt, outputs)
+              end)
+              |> Enum.sum()
 
-          IO.puts("Epoch #{epoch} | Loss: #{Float.round(loss, 4)} | Accuracy: #{Float.round(accuracy * 100, 2)}%")
+            accuracy =
+              Enum.zip(inputs, targets)
+              |> Enum.map(fn {inp, tgt} ->
+                {_, outputs} = forward(inp, new_wih, new_who, new_bh, new_bo)
+
+                predicted_idx =
+                  Enum.with_index(outputs)
+                  |> Enum.max_by(fn {val, _} -> val end)
+                  |> elem(1)
+
+                expected_idx =
+                  Enum.with_index(tgt)
+                  |> Enum.max_by(fn {val, _} -> val end)
+                  |> elem(1)
+
+                if predicted_idx == expected_idx, do: 1, else: 0
+              end)
+              |> Enum.sum()
+              |> Kernel./(length(inputs))
+
+            IO.puts(
+              "Época #{epoch} | Loss: #{Float.round(total_loss, 4)} | Acurácia: #{Float.round(accuracy * 100, 2)}%"
+            )
+          end
+
+          {new_wih, new_who, new_bh, new_bo}
         end
-
-        {wih, who, bh, bo}
-      end)
+      )
 
     model = %{
-      weights_input_hidden: wih,
-      weights_hidden_output: who,
-      bias_hidden: bh,
-      bias_output: bo
+      weights_input_hidden: final_wih,
+      weights_hidden_output: final_who,
+      bias_hidden: final_bh,
+      bias_output: final_bo
     }
 
     save_model(model, colors, "dados/color_classifier.dat")
+    IO.puts("Treinamento concluído!")
   end
 
   # Predict
   def predict(rgb, weights_input_hidden, weights_hidden_output, bias_hidden, bias_output, colors) do
-    inputs = Enum.map(rgb, &(&1 / 255.0))
-    {_, outputs} = forward(inputs, weights_input_hidden, weights_hidden_output, bias_hidden, bias_output)
-    max_idx = Enum.max_by(Enum.with_index(outputs), fn {val, _} -> val end) |> elem(1)
+    inputs = Enum.map(rgb, fn x -> x / 255.0 end)
 
-    # Ensure valid prediction
-    predicted = if max_idx != nil and max_idx < length(colors), do: Enum.at(colors, max_idx), else: "Desconhecido"
-    confidence = Enum.at(outputs, max_idx || 0) * 100
-    {predicted, confidence}
+    {_, outputs} =
+      forward(inputs, weights_input_hidden, weights_hidden_output, bias_hidden, bias_output)
+
+    {confidence, max_idx} =
+      Enum.with_index(outputs)
+      |> Enum.max_by(fn {val, _} -> val end)
+
+    predicted =
+      if max_idx < length(colors) do
+        Enum.at(colors, max_idx)
+      else
+        "Desconhecido"
+      end
+
+    {predicted, confidence * 100}
+  end
+
+  # Interactive Mode
+  defp interactive_mode(model, colors) do
+    {weights_input_hidden, weights_hidden_output, bias_hidden, bias_output} = model
+
+    IO.puts("\n=== MODO INTERATIVO ===")
+    IO.puts("Digite valores RGB (ex: 255,0,0) ou 'sair' para terminar:")
+
+    case IO.gets("RGB> ") |> String.trim() do
+      "sair" ->
+        IO.puts("Saindo...")
+
+      input ->
+        case String.split(input, ",") do
+          [r, g, b] ->
+            try do
+              rgb = [
+                String.to_integer(String.trim(r)),
+                String.to_integer(String.trim(g)),
+                String.to_integer(String.trim(b))
+              ]
+
+              if Enum.all?(rgb, fn x -> x >= 0 and x <= 255 end) do
+                {predicted, confidence} =
+                  predict(
+                    rgb,
+                    weights_input_hidden,
+                    weights_hidden_output,
+                    bias_hidden,
+                    bias_output,
+                    colors
+                  )
+
+                IO.puts("RGB: #{inspect(rgb)} → #{predicted} (#{Float.round(confidence, 1)}%)")
+              else
+                IO.puts("Erro: valores RGB devem estar entre 0 e 255")
+              end
+
+              interactive_mode(model, colors)
+            rescue
+              _ ->
+                IO.puts("Erro: formato inválido. Use: R,G,B (ex: 255,0,0)")
+                interactive_mode(model, colors)
+            end
+
+          _ ->
+            IO.puts("Erro: formato inválido. Use: R,G,B (ex: 255,0,0)")
+            interactive_mode(model, colors)
+        end
+    end
   end
 
   # Main Function
@@ -257,25 +375,81 @@ defmodule ColorClassifier do
             {weights_input_hidden, weights_hidden_output, bias_hidden, bias_output} = model
 
             test_data = [
+              # Vermelho
               [200, 0, 70],
-              [30, 10, 240]
+              # Azul
+              [30, 10, 240],
+              # Vermelho puro
+              [255, 0, 0],
+              # Verde puro
+              [0, 255, 0],
+              # Azul puro
+              [0, 0, 255],
+              # Amarelo
+              [255, 255, 0],
+              # Magenta
+              [255, 0, 255],
+              # Ciano
+              [0, 255, 255],
+              # Cinza
+              [128, 128, 128]
             ]
 
-            IO.puts("\n================ TESTE ===============")
+            IO.puts("\n================ TESTE AUTOMÁTICO ===============")
+
             Enum.each(test_data, fn rgb ->
-              {predicted, confidence} = predict(rgb, weights_input_hidden, weights_hidden_output, bias_hidden, bias_output, colors)
-              IO.puts("Cor RGB: #{inspect(rgb)} | Previsão: #{String.pad_leading(predicted, 10)} | Confiança: #{Float.round(confidence, 1)}%")
+              {predicted, confidence} =
+                predict(
+                  rgb,
+                  weights_input_hidden,
+                  weights_hidden_output,
+                  bias_hidden,
+                  bias_output,
+                  colors
+                )
+
+              IO.puts(
+                "RGB: #{inspect(rgb) |> String.pad_trailing(15)} | Previsão: #{String.pad_trailing(predicted, 12)} | Confiança: #{Float.round(confidence, 1)}%"
+              )
             end)
 
+            # Modo interativo
+            interactive_mode(model, colors)
+
           nil ->
-            IO.puts("Model not found. Please train the model first using 'elixir color_classifier.exs treino'.")
+            IO.puts("Modelo não encontrado. Execute primeiro: elixir color_classifier.exs treino")
+        end
+
+      ["treino", epochs_str] ->
+        case Integer.parse(epochs_str) do
+          {epochs, ""} when epochs > 0 ->
+            train_model(epochs)
+
+          _ ->
+            IO.puts("Número de épocas inválido: #{epochs_str}")
         end
 
       _ ->
-        IO.puts("Usage: elixir color_classifier.exs [treino|reconhecer]")
+        IO.puts("Uso:")
+        IO.puts("  elixir color_classifier.exs treino [épocas]")
+        IO.puts("  elixir color_classifier.exs reconhecer")
+        IO.puts("")
+        IO.puts("Exemplos:")
+        IO.puts("  elixir color_classifier.exs treino")
+        IO.puts("  elixir color_classifier.exs treino 10000")
+        IO.puts("  elixir color_classifier.exs reconhecer")
     end
   end
 end
 
 # Run the Script
 ColorClassifier.main(System.argv())
+
+## Treinar o modelo
+# elixir color_classifier.exs treino
+
+## Treinar com número específico de épocas
+# elixir color_classifier.exs treino 10000
+
+## Reconhecer cores (inclui teste automático + modo interativo)
+# elixir color_classifier.exs reconhecer
