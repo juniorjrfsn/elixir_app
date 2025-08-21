@@ -28,3 +28,22 @@ Start your Phoenix app with:
     $ mix phx.server
 You can also run your app inside IEx (Interactive Elixir) as:
     $ iex -S mix phx.server
+
+
+
+
+```
+curl -X POST http://localhost:4000/api/images/process
+
+```
+
+5. Estrutura de Diretórios Sugerida:
+priv/
+├── static/
+│   ├── uploads/          # Imagens uploadadas
+│   └── results/          # Resultados do processamento
+└── python/
+    ├── process_image.py  # Script principal
+    ├── models/           # Modelos treinados
+    └── requirements.txt  # Dependências Python
+Essa estrutura permite que você processe as imagens uploadadas usando diferentes métodos de deep learning, mantendo flexibilidade para escolher a abordagem mais adequada ao seu caso de uso específico.

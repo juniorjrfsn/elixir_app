@@ -63,9 +63,14 @@ defmodule Appphoenix.MixProject do
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.26"},
-      {:jason, "~> 1.2"},
+
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:jason, "~> 1.4"},          # JSON encoding/decoding
+      {:httpoison, "~> 2.0"},      # HTTP client para APIs
+      {:nx, "~> 0.6"},             # Computação numérica (opcional)
+      {:bumblebee, "~> 0.4"},      # ML models (opcional)
+      {:stb_image, "~> 0.6"}       # Processamento de imagens (opcional)
     ]
   end
 

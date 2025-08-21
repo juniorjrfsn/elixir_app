@@ -19,8 +19,45 @@ defmodule AppphoenixWeb.Router do
 
     get("/", PageController, :home)
 
+    # Upload de imagens
     get("/upload", ImageController, :new)
     post("/upload", ImageController, :create)
+
+    get("/gallery", ImageController, :gallery)  # Ver todas as imagens
+    get("/images/:filename", ImageController, :show)  # Ver imagem específica
+
+    # Galeria de imagens
+    get("/gallery", ImageController, :gallery)
+    get("/gallery/:filename", ImageController, :show)
+    get("/images/:filename", ImageController, :show)
+  end
+
+  # API endpoints para deep learning
+  scope "/api", AppphoenixWeb do
+    pipe_through(:api)
+
+    # Listar todas as imagens para processamento
+    get("/images", ImageController, :list)
+
+    # Processar todas as imagens em lote
+    post("/images/process", ImageController, :process_batch)
+
+    # Processar uma imagem específica
+    post("/images/:filename/process", ImageController, :process_single)
+
+    # Obter resultados do processamento
+    get("/images/:filename/results", ImageController, :get_results)
+
+    # Status do processamento
+    get("/processing/status", ProcessingController, :status)
+  end
+
+    # Servir arquivos de upload estaticamente
+  scope "/" do
+    pipe_through(:browser)
+
+    # Servir imagens uploadadas
+    get("/uploads/*path", ImageController, :serve_image)
   end
 
   # Other scopes may use custom stacks.

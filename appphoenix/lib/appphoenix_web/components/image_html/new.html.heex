@@ -6,6 +6,7 @@
     </div>
     <div class="card flex-shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
       <form action="/upload" method="post" enctype="multipart/form-data" class="card-body">
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
         <div class="form-control">
           <label class="label">
             <span class="label-text">Image Name</span>
@@ -19,7 +20,7 @@
           <input type="file" name="image[file]" class="file-input file-input-bordered w-full" accept="image/*" required />
         </div>
         <div class="form-control mt-6">
-          <.button type="submit">Upload</.button>
+          <button type="submit" class="btn btn-primary">Upload</button>
         </div>
       </form>
     </div>

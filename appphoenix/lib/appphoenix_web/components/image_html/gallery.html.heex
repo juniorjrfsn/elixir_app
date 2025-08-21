@@ -1,0 +1,147 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-4xl font-bold">Image Gallery</h1>
+    <div class="space-x-2">
+      <a href="/upload" class="btn btn-primary">Upload New Image</a>
+      <button onclick="processAllImages()" class="btn btn-secondary">Process All with AI</button>
+    </div>
+  </div>
+
+  <%= if @images == [] do %>
+    <div class="text-center py-12">
+      <div class="text-6xl mb-4">📁</div>
+      <h2 class="text-2xl font-semibold mb-2">No images uploaded yet</h2>
+      <p class="text-gray-600 mb-4">Upload your first image to get started with deep learning!</p>
+      <a href="/upload" class="btn btn-primary">Upload Image</a>
+    </div>
+  <% else %>
+    <div class="mb-4">
+      <p class="text-lg"><strong><%= length(@images) %></strong> images ready for deep learning processing</p>
+    </div>
+
+
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+  <%= for image <- @images do %>
+    <div class="card bg-base-100 shadow-xl">
+      <figure class="px-4 pt-4">
+        <img src={"/images/#{image.filename}"}
+             alt={image.filename}
+             class="rounded-xl h-48 w-full object-cover cursor-pointer"
+             onclick={"openImageModal('#{image.filename}')"} />
+      </figure>
+      <div class="card-body">
+        <h2 class="card-title text-sm" title={image.filename}>
+          <%= String.slice(image.filename, 0, 20) %><%= if String.length(image.filename) > 20, do: "..." %>
+        </h2>
+        <p class="text-xs text-gray-600">
+          Size: <%= format_file_size(image.size) %><br>
+          Uploaded: <%= format_datetime(image.modified) %>
+        </p>
+        <div class="card-actions justify-end">
+          <button onclick={"processImage('#{image.filename}')"}
+                  class="btn btn-sm btn-primary">
+            🧠 Process AI
+          </button>
+          <button onclick={"viewResults('#{image.filename}')"}
+                  class="btn btn-sm btn-outline">
+            📊 Results
+          </button>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+
+  <% end %>
+</div>
+
+<!-- Modal para exibir imagem em tamanho maior -->
+<dialog id="imageModal" class="modal">
+  <div class="modal-box max-w-4xl">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+    </form>
+    <img id="modalImage" src="" alt="" class="w-full h-auto rounded-lg" />
+    <div class="py-4">
+      <h3 id="modalTitle" class="font-bold text-lg"></h3>
+      <div id="modalInfo" class="text-sm text-gray-600"></div>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>
+
+<script>
+  function openImageModal(filename) {
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const modalTitle = document.getElementById('modalTitle');
+    
+    modalImage.src = `/images/${filename}`;
+    modalTitle.textContent = filename;
+    
+    modal.showModal();
+  }
+
+  function processImage(filename) {
+    fetch(`/api/images/${filename}/process`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        alert(`✅ Image ${filename} processed successfully!`);
+      } else {
+        alert(`❌ Error processing ${filename}: ${data.message}`);
+      }
+    })
+    .catch(error => {
+      alert(`❌ Error: ${error.message}`);
+    });
+  }
+
+  function processAllImages() {
+    if (!confirm('Process all images with AI? This may take a while.')) return;
+    
+    fetch('/api/images/process', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        alert(`✅ Batch processing completed! Processed ${data.results.total} images.`);
+      } else {
+        alert(`❌ Batch processing failed: ${data.message}`);
+      }
+    })
+    .catch(error => {
+      alert(`❌ Error: ${error.message}`);
+    });
+  }
+
+  function viewResults(filename) {
+    fetch(`/api/images/${filename}/results`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        alert(`Results for ${filename}:\n${JSON.stringify(data.results, null, 2)}`);
+      } else {
+        alert(`No results found for ${filename}`);
+      }
+    })
+    .catch(error => {
+      alert(`❌ Error: ${error.message}`);
+    });
+  }
+</script>
