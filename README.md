@@ -40,3 +40,9 @@ ssl_certificate_key junior-ms-7c09.lvh.me.key ;
 openssl req -newkey rsa:2048 -nodes -keyout  junior-ms-7c09.lvh.me.key  -out  junior-ms-7c09.lvh.me.crt
 cat  junior-ms-7c09.lvh.me.crt >  junior-ms-7c09.lvh.me.csr
 ```
+
+
+## Aplicação com rede neural convolucional
+```
+mix new cnn
+```
