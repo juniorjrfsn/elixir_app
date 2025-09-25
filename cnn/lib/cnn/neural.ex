@@ -1,12 +1,12 @@
 # lib/cnn/neural.ex
-
+# lib/cnn/neural.ex
 
 defmodule Cnn.Neural do
   @moduledoc """
   Improved Convolutional Neural Network implementation for digit classification
   """
 
-  alias Cnn.{Matrix, Utils, ConvOps}
+  alias Cnn.{Matrix, Utils}
 
   defstruct [
     conv1: nil,    # First convolutional layer
@@ -222,15 +222,19 @@ defmodule Cnn.Neural do
   def print_network_weights(network) do
     IO.puts("=== PESOS DA REDE NEURAL ===")
     IO.puts("Conv1 filtros: #{length(network.conv1.filters)} filtros 3x3")
-    network.conv1.filters |> Enum.each_with_index(fn filter, i ->
-      IO.puts("Filtro #{i + 1}:")
+    network.conv1.filters
+    |> Enum.with_index(1)
+    |> Enum.each(fn {filter, i} ->
+      IO.puts("Filtro #{i}:")
       Utils.print_matrix(filter)
     end)
     IO.puts("Conv1 bias: #{Utils.format_weights(network.conv1.bias)}\n")
 
     IO.puts("Conv2 filtros: #{length(network.conv2.filters)} filtros 3x3")
-    network.conv2.filters |> Enum.each_with_index(fn filter, i ->
-      IO.puts("Filtro #{i + 1}:")
+    network.conv2.filters
+    |> Enum.with_index(1)
+    |> Enum.each(fn {filter, i} ->
+      IO.puts("Filtro #{i}:")
       Utils.print_matrix(filter)
     end)
     IO.puts("Conv2 bias: #{Utils.format_weights(network.conv2.bias)}\n")
@@ -243,6 +247,10 @@ defmodule Cnn.Neural do
     Utils.print_matrix(network.fc2.weights)
     IO.puts("FC2 bias: #{Utils.format_weights(network.fc2.bias)}\n")
   end
+
+  # Make top_edge_density and bottom_edge_density public for testing
+  def top_edge_density(matrix), do: (matrix |> Enum.at(0) |> Enum.sum()) / length(Enum.at(matrix, 0))
+  def bottom_edge_density(matrix), do: (matrix |> Enum.at(-1) |> Enum.sum()) / length(Enum.at(matrix, -1))
 
   # Private functions
 
@@ -359,10 +367,8 @@ defmodule Cnn.Neural do
       end)) / total
   end
 
-  def top_edge_density(matrix), do: (matrix |> Enum.at(0) |> Enum.sum()) / 5
-  def bottom_edge_density(matrix), do: (matrix |> Enum.at(-1) |> Enum.sum()) / 5
-  defp left_edge_density(matrix), do: (matrix |> Enum.map(&Enum.at(&1, 0)) |> Enum.sum()) / 5
-  defp right_edge_density(matrix), do: (matrix |> Enum.map(&Enum.at(&1, -1)) |> Enum.sum()) / 5
+  defp left_edge_density(matrix), do: (matrix |> Enum.map(&Enum.at(&1, 0)) |> Enum.sum()) / length(matrix)
+  defp right_edge_density(matrix), do: (matrix |> Enum.map(&Enum.at(&1, -1)) |> Enum.sum()) / length(matrix)
 
   defp calculate_horizontal_symmetry(matrix) do
     matrix
@@ -372,9 +378,9 @@ defmodule Cnn.Neural do
       if mid == 0 do
         1.0
       else
-        _first_half = Enum.take(row, mid)
-        _second_half = row |> Enum.reverse() |> Enum.take(mid)
-        matches = Enum.zip(_first_half, _second_half)
+        first_half = Enum.take(row, mid)
+        second_half = row |> Enum.reverse() |> Enum.take(mid)
+        matches = Enum.zip(first_half, second_half)
         |> Enum.count(fn {a, b} -> a == b end)
         matches / mid
       end
@@ -389,9 +395,9 @@ defmodule Cnn.Neural do
     if mid == 0 do
       1.0
     else
-      _first_half = Enum.take(matrix, mid)
-      _second_half = matrix |> Enum.reverse() |> Enum.take(mid)
-      matches = Enum.zip(_first_half, _second_half)
+      first_half = Enum.take(matrix, mid)
+      second_half = matrix |> Enum.reverse() |> Enum.take(mid)
+      matches = Enum.zip(first_half, second_half)
       |> Enum.count(fn {row1, row2} -> row1 == row2 end)
       matches / mid
     end
