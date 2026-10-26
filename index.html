@@ -13,6 +13,30 @@ main{max-width:1200px;margin:24px auto;padding:0 18px 40px}.notice{border-left:5
 section,.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}section{padding:22px;margin:18px 0}h2{margin:0 0 12px;font-size:1.45rem}h3{margin:0 0 8px;font-size:1.05rem}p{margin:8px 0}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{padding:16px;box-shadow:none}.pill{display:inline-block;padding:3px 9px;border-radius:99px;background:var(--blue2);color:var(--blue);font-size:.85rem;font-weight:700}.normal{color:var(--green)}.alert{color:var(--red)}.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}button{border:0;border-radius:9px;padding:10px 14px;background:var(--blue);color:white;font-weight:700;cursor:pointer}button.secondary{background:#e9eff6;color:var(--ink)}button:disabled{opacity:.45;cursor:not-allowed}input,select{font:inherit;padding:9px 10px;border:1px solid #b9cbe0;border-radius:8px;max-width:100%}label{display:block;font-weight:650;margin:10px 0 5px}.range{width:100%}.stepbox{padding:14px;border:1px solid var(--border);border-radius:10px;background:#f8fbff;margin-top:12px}.stepnum{display:inline-grid;place-items:center;background:var(--blue);color:#fff;border-radius:50%;width:30px;height:30px;font-weight:800;margin-right:8px}.bar{height:18px;background:#e5ebf3;border-radius:99px;overflow:hidden;display:flex;margin:16px 0 8px}.bar span{display:block;height:100%}.bar .low,.bar .high{background:#f6b8c0}.bar .mid{background:#8bd8b1}.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:.82rem}.result{padding:14px;border-radius:10px;font-weight:750;margin-top:12px}.result.ok{background:var(--greenbg);color:var(--green)}.result.bad{background:var(--redbg);color:var(--red)}.log{background:#101d2e;color:#d9e8fa;padding:15px;border-radius:10px;min-height:120px;max-height:360px;overflow:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:.94rem}th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border)}th{background:#f1f6fb}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}.dot.green{background:var(--green)}.dot.red{background:var(--red)}.code{background:#f0f4f9;padding:2px 5px;border-radius:5px;font-family:ui-monospace,monospace}footer{text-align:center;color:var(--muted);padding:20px}
 @media(max-width:760px){.grid,.grid3{grid-template-columns:1fr}section{padding:16px}header{padding:24px 18px}}
 </style>
+
+<style>
+/* Laboratório visual: fluxo interativo do classificador */
+#neuron-lab .network-shell{background:linear-gradient(145deg,#f7fbff,#edf5ff);border:1px solid #c9dff4;border-radius:14px;padding:12px;overflow:hidden}
+#neuron-lab svg{display:block;width:100%;height:auto;min-height:250px}
+#neuron-lab .node{fill:#fff;stroke:#8bb8e2;stroke-width:2}
+#neuron-lab .node.active{fill:#e1f2ff;stroke:#1769aa;stroke-width:3}
+#neuron-lab .node.alert-node{fill:#fff0f1;stroke:#c83245}
+#neuron-lab .node.normal-node{fill:#e6f7ef;stroke:#14845b}
+#neuron-lab .edge{stroke:#9ab3cc;stroke-width:3;fill:none}
+#neuron-lab .edge.hot{stroke:#1769aa;stroke-width:5}
+#neuron-lab .edge.bad{stroke:#c83245;stroke-width:5}
+#neuron-lab .net-label{font:700 14px system-ui;fill:#172b4d;text-anchor:middle}
+#neuron-lab .net-small{font:12px system-ui;fill:#5c6f89;text-anchor:middle}
+#neuron-lab .control-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+#neuron-lab input[type=range]{width:100%;accent-color:#1769aa}
+#neuron-lab .metric{padding:12px;border:1px solid #d7e3f0;border-radius:10px;background:#fff}
+#neuron-lab .metric strong{font-size:1.35rem;display:block}
+#neuron-lab .step-list{display:grid;gap:8px}
+#neuron-lab .flow-step{padding:10px 12px;border-radius:9px;background:#f1f6fb;border-left:4px solid #c5d5e6}
+#neuron-lab .flow-step.current{background:#e8f3ff;border-left-color:#1769aa}
+#neuron-lab .flow-step.done{background:#e6f7ef;border-left-color:#14845b}
+@media(max-width:650px){#neuron-lab svg{min-height:200px}}
+</style>
 </head>
 <body>
 <header>
@@ -111,6 +135,48 @@ section,.card{background:var(--panel);border:1px solid var(--border);border-radi
       <div id="comparisonCaption" class="stepbox">O gráfico será atualizado quando o treinamento for concluído.</div>
     </div>
   </section>
+
+
+<section id="neuron-lab">
+  <h2>6. Neurônio sinalizador interativo — caminho da medição</h2>
+  <p class="muted">Explore como uma medição percorre o classificador. Para manter fidelidade ao arquivo Elixir, o diagrama mostra um <strong>neurônio lógico de decisão</strong>: duas comparações com os limites alimentam a decisão final. Não é uma rede neural tradicional com pesos treináveis.</p>
+  <div class="control-grid">
+    <div class="card">
+      <label for="netValue">Nova medição: <strong id="netValueLabel">0,45</strong></label>
+      <input id="netValue" type="range" min="0" max="1" step="0.01" value="0.45">
+      <label for="netValueNum">Valor exato (0 a 1)</label><input id="netValueNum" type="number" min="0" max="1" step="0.01" value="0.45">
+    </div>
+    <div class="card">
+      <label for="netLow">Limite inferior: <strong id="netLowLabel">0,33</strong></label>
+      <input id="netLow" type="range" min="0" max="1" step="0.01" value="0.33">
+      <label for="netHigh">Limite superior: <strong id="netHighLabel">0,66</strong></label>
+      <input id="netHigh" type="range" min="0" max="1" step="0.01" value="0.66">
+      <p class="note">Ajuste os limites para simular outra faixa normal.</p>
+    </div>
+    <div class="card">
+      <h3>Resultado ao vivo</h3>
+      <div class="metric"><strong id="netClass">NORMAL (0)</strong><span id="netReason">Valor dentro dos limites.</span></div>
+      <div class="btns"><button id="netAnimate">▶ Percorrer o caminho</button><button id="netReset" class="secondary">Restaurar exemplo</button></div>
+    </div>
+  </div>
+  <div class="grid" style="margin-top:14px">
+    <div class="network-shell">
+      <h3>Fluxo da medição pela rede lógica</h3>
+      <svg id="neuronSvg" viewBox="0 0 760 330" role="img" aria-label="Diagrama interativo do caminho da medição pelas comparações e decisão"></svg>
+      <p class="note">Azul = caminho ativo; vermelho = comparação que dispara alerta; verde = saída normal.</p>
+    </div>
+    <div class="card">
+      <h3>Passo a passo da inferência</h3>
+      <div id="netSteps" class="step-list" aria-live="polite"></div>
+      <h3 style="margin-top:16px">Indicadores do modelo</h3>
+      <div class="grid3">
+        <div class="metric"><span class="muted">Entrada</span><strong id="netMetricX">0,45</strong></div>
+        <div class="metric"><span class="muted">Distância da faixa</span><strong id="netDistance">0,00</strong></div>
+        <div class="metric"><span class="muted">Classe</span><strong id="netMetricY">0</strong></div>
+      </div>
+    </div>
+  </div>
+</section>
 
   <section id="limits">
     <h2>5. Como interpretar corretamente</h2>
@@ -387,6 +453,59 @@ $("exampleRows").innerHTML='<tr><td colspan="3">Execute o treinamento para exibi
   });
   $("measurement")?.addEventListener("input",()=>{seenInferenceValue=Number($("measurement").value);drawInference()});
   drawTraining();drawComparison();drawInference();
+})();
+</script>
+
+
+<script>
+(function(){
+ const $=id=>document.getElementById(id);
+ const fmt=n=>Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+ let currentStep=4, animTimer=null;
+ function val(id){return Number($(id).value)}
+ function classify(x,lo,hi){return x<lo||x>hi?1:0}
+ function render(){
+   let x=val('netValue'),lo=val('netLow'),hi=val('netHigh');
+   if(lo>hi){const t=lo;lo=hi;hi=t;$('netLow').value=lo;$('netHigh').value=hi}
+   $('netValueLabel').textContent=fmt(x);$('netValueNum').value=x;
+   $('netLowLabel').textContent=fmt(lo);$('netHighLabel').textContent=fmt(hi);
+   const anomaly=classify(x,lo,hi)===1, below=x<lo, above=x>hi;
+   $('netClass').textContent=anomaly?'ANOMALIA (1)':'NORMAL (0)';
+   $('netClass').style.color=anomaly?'#c83245':'#14845b';
+   $('netReason').textContent=below?`${fmt(x)} < ${fmt(lo)}: abaixo do limite inferior.`:above?`${fmt(x)} > ${fmt(hi)}: acima do limite superior.`:'Valor dentro dos limites, inclusive.';
+   $('netMetricX').textContent=fmt(x);$('netMetricY').textContent=anomaly?'1':'0';
+   $('netDistance').textContent=fmt(below?lo-x:above?x-hi:0);
+   const steps=[
+    `1 · Entrada: recebe a medição ${fmt(x)}.`,
+    `2 · Comparação inferior: ${fmt(x)} < ${fmt(lo)} é ${below?'verdadeiro':'falso'}.`,
+    `3 · Comparação superior: ${fmt(x)} > ${fmt(hi)} é ${above?'verdadeiro':'falso'}.`,
+    `4 · Decisão: ${anomaly?'fora da faixa → ANOMALIA / ALERTA':'dentro da faixa → NORMAL / SEM ALERTA'}.`
+   ];
+   $('netSteps').innerHTML=steps.map((t,i)=>`<div class="flow-step ${i<currentStep?'done':i===currentStep?'current':''}">${t}</div>`).join('');
+   const active=currentStep;
+   const edge=(a,b)=>`<path class="edge ${active>=a?'hot':''} ${anomaly&&((below&&a===1)||(above&&a===2))?'bad':''}" d="${a===0?'M145 165 L220 165':a===1?'M355 105 L430 135':a===2?'M355 225 L430 195':'M555 165 L625 165'}" />`;
+   const node=(x,y,w,h,title,sub,cls='')=>`<rect class="node ${cls}" x="${x}" y="${y}" width="${w}" height="${h}" rx="13"/><text class="net-label" x="${x+w/2}" y="${y+27}">${title}</text><text class="net-small" x="${x+w/2}" y="${y+49}">${sub}</text>`;
+   $('neuronSvg').innerHTML=`
+    <defs><marker id="netArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1769aa"/></marker></defs>
+    ${edge(0,4)}${edge(1,4)}${edge(2,4)}${edge(3,4)}
+    ${node(15,132,130,66,'MEDIÇÃO',fmt(x),active===0?'active':'')}
+    ${node(220,70,135,70,'x < inferior',below?'VERDADEIRO':'FALSO',below?'alert-node':active===1?'active':'')}
+    ${node(220,190,135,70,'x > superior',above?'VERDADEIRO':'FALSO',above?'alert-node':active===2?'active':'')}
+    ${node(430,125,125,80,'DECISÃO',below||above?'FORA DA FAIXA':'DENTRO',active>=3?(anomaly?'alert-node':'normal-node'):'')}
+    ${node(625,132,120,66,anomaly?'ALERTA':'SEM ALERTA',anomaly?'CLASSE 1':'CLASSE 0',active>=4?(anomaly?'alert-node':'normal-node'):'')}
+    <text class="net-small" x="285" y="45">Comparação 1</text><text class="net-small" x="285" y="285">Comparação 2</text>
+    <text class="net-small" x="490" y="230">OR lógico das condições</text>`;
+ }
+ function syncFromNumber(){let x=Number($('netValueNum').value);if(Number.isFinite(x)&&x>=0&&x<=1){$('netValue').value=x;currentStep=4;render()}}
+ $('netValue').addEventListener('input',()=>{currentStep=4;render()});
+ $('netValueNum').addEventListener('input',syncFromNumber);
+ ['netLow','netHigh'].forEach(id=>$(id).addEventListener('input',()=>{currentStep=4;render()}));
+ $('netAnimate').addEventListener('click',()=>{
+   if(animTimer)clearInterval(animTimer);currentStep=0;render();
+   animTimer=setInterval(()=>{currentStep++;render();if(currentStep>=4){clearInterval(animTimer);animTimer=null}},650);
+ });
+ $('netReset').addEventListener('click',()=>{if(animTimer)clearInterval(animTimer);animTimer=null;$('netValue').value=.45;$('netLow').value=.33;$('netHigh').value=.66;currentStep=4;render()});
+ render();
 })();
 </script>
 
