@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neurônio Sinalizador de Anomalias — Treinamento e Inferência</title>
+<style>
+:root{--bg:#f3f7fc;--panel:#fff;--ink:#172b4d;--muted:#5c6f89;--blue:#1769aa;--blue2:#e8f3ff;--green:#14845b;--greenbg:#e6f7ef;--red:#c83245;--redbg:#fff0f1;--border:#d7e3f0;--shadow:0 8px 24px #163b6510}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+header{background:linear-gradient(120deg,#163e70,#1769aa);color:white;padding:30px max(20px,calc((100% - 1200px)/2))}
+header h1{margin:0 0 8px;font-size:clamp(1.6rem,3vw,2.4rem)}header p{margin:0;color:#d9edff;max-width:850px}
+main{max-width:1200px;margin:24px auto;padding:0 18px 40px}.notice{border-left:5px solid #e4a11b;background:#fff8e7;padding:14px 16px;border-radius:8px;margin-bottom:20px}
+section,.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}section{padding:22px;margin:18px 0}h2{margin:0 0 12px;font-size:1.45rem}h3{margin:0 0 8px;font-size:1.05rem}p{margin:8px 0}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{padding:16px;box-shadow:none}.pill{display:inline-block;padding:3px 9px;border-radius:99px;background:var(--blue2);color:var(--blue);font-size:.85rem;font-weight:700}.normal{color:var(--green)}.alert{color:var(--red)}.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}button{border:0;border-radius:9px;padding:10px 14px;background:var(--blue);color:white;font-weight:700;cursor:pointer}button.secondary{background:#e9eff6;color:var(--ink)}button:disabled{opacity:.45;cursor:not-allowed}input,select{font:inherit;padding:9px 10px;border:1px solid #b9cbe0;border-radius:8px;max-width:100%}label{display:block;font-weight:650;margin:10px 0 5px}.range{width:100%}.stepbox{padding:14px;border:1px solid var(--border);border-radius:10px;background:#f8fbff;margin-top:12px}.stepnum{display:inline-grid;place-items:center;background:var(--blue);color:#fff;border-radius:50%;width:30px;height:30px;font-weight:800;margin-right:8px}.bar{height:18px;background:#e5ebf3;border-radius:99px;overflow:hidden;display:flex;margin:16px 0 8px}.bar span{display:block;height:100%}.bar .low,.bar .high{background:#f6b8c0}.bar .mid{background:#8bd8b1}.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:.82rem}.result{padding:14px;border-radius:10px;font-weight:750;margin-top:12px}.result.ok{background:var(--greenbg);color:var(--green)}.result.bad{background:var(--redbg);color:var(--red)}.log{background:#101d2e;color:#d9e8fa;padding:15px;border-radius:10px;min-height:120px;max-height:360px;overflow:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:.94rem}th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border)}th{background:#f1f6fb}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}.dot.green{background:var(--green)}.dot.red{background:var(--red)}.code{background:#f0f4f9;padding:2px 5px;border-radius:5px;font-family:ui-monospace,monospace}footer{text-align:center;color:var(--muted);padding:20px}
+@media(max-width:760px){.grid,.grid3{grid-template-columns:1fr}section{padding:16px}header{padding:24px 18px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Neurônio Sinalizador de Anomalias</h1>
+  <p>Guia interativo de treinamento e inferência — um único valor de entrada, uma faixa normal e dois sinais: normal (0) ou anomalia (1).</p>
+</header>
+<main>
+  <div class="notice"><strong>Importante:</strong> esta demonstração reproduz a lógica do script Elixir. Apesar do nome original, o algoritmo é um classificador por limites pesquisados, não uma rede neural tradicional com pesos. Os dados são exemplos didáticos, não medições reais de um instrumento.</div>
+
+  <section id="overview">
+    <h2>1. Visão geral do processo</h2>
+    <div class="grid3">
+      <div class="card"><span class="pill">Entrada</span><h3 style="margin-top:10px">Uma medição</h3><p>Um número fornecido por uma fonte única: sensor, instrumento ou arquivo.</p></div>
+      <div class="card"><span class="pill">Modelo</span><h3 style="margin-top:10px">Faixa aprendida</h3><p>O treinamento procura o limite inferior e o superior que melhor classificam os exemplos.</p></div>
+      <div class="card"><span class="pill">Saída</span><h3 style="margin-top:10px">Sinalizador</h3><p><strong class="normal">0 = normal</strong> dentro da faixa; <strong class="alert">1 = anomalia</strong> fora da faixa.</p></div>
+    </div>
+    <h3 style="margin-top:20px">Faixa aprendida no exemplo</h3>
+    <div class="bar" aria-label="Faixa normal entre 0,33 e 0,66"><span class="low" style="width:33%"></span><span class="mid" style="width:33%"></span><span class="high" style="width:34%"></span></div>
+    <div class="axis"><span>0,00</span><span>0,33 — início do normal</span><span>0,66 — fim do normal</span><span>1,00</span></div>
+    <p><span class="dot red"></span>Fora da faixa: alerta. <span class="dot green"></span>Dentro da faixa, incluindo os limites: sem alerta.</p>
+  </section>
+
+  <section id="training">
+    <h2>2. Simulador de treinamento passo a passo</h2>
+    <p class="muted">O treinamento usa 13 exemplos rotulados. Para cada par de limites, conta quantos exemplos seriam classificados incorretamente e conserva o par com menos erros.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Exemplos supervisionados</h3>
+        <div class="tablewrap"><table><thead><tr><th>Valor</th><th>Classe esperada</th></tr></thead><tbody id="trainingRows"></tbody></table></div>
+        <p class="muted">Classe 0 = normal · Classe 1 = anomalia</p>
+      </div>
+      <div class="card">
+        <h3>Passos do treinamento</h3>
+        <div id="trainingStep" class="stepbox" aria-live="polite"><span class="stepnum">0</span>Pronto para iniciar. Clique em “Próximo passo”.</div>
+        <div id="trainingStats" class="stepbox">Ainda não foram avaliados candidatos.</div>
+        <div class="btns">
+          <button id="trainNext">Próximo passo</button>
+          <button id="trainAll" class="secondary">Executar treinamento completo</button>
+          <button id="trainReset" class="secondary">Reiniciar</button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px"><h3>Registro detalhado (IO.puts equivalente)</h3><div class="log" id="trainLog" aria-live="polite">[TREINO] Aguardando início...</div></div>
+  </section>
+
+  <section id="inference">
+    <h2>3. Simulador de inferência passo a passo</h2>
+    <p>Depois de treinar, forneça uma medição de teste. O simulador mostra cada comparação e o sinal final.</p>
+    <div class="grid">
+      <div class="card">
+        <label for="measurement">Nova medição (entre 0 e 1)</label>
+        <input id="measurement" type="number" min="0" max="1" step="0.01" value="0.45">
+        <div class="btns"><button id="inferStart">Iniciar inferência</button><button id="inferNext" class="secondary" disabled>Próximo passo</button><button id="inferReset" class="secondary">Limpar inferência</button></div>
+        <div id="inferResult" class="result" aria-live="polite">Aguardando uma medição.</div>
+      </div>
+      <div class="card">
+        <h3>Passo atual</h3>
+        <div id="inferStep" class="stepbox">Treine o modelo e inicie uma inferência para ver os detalhes.</div>
+        <h3 style="margin-top:14px">Faixa normal</h3>
+        <div class="bar"><span class="low" id="lowBar" style="width:33%"></span><span class="mid" id="midBar" style="width:33%"></span><span class="high" id="highBar" style="width:34%"></span></div>
+        <div class="axis"><span>0</span><span id="lowerLabel">0,33</span><span id="upperLabel">0,66</span><span>1</span></div>
+      </div>
+    </div>
+    <div style="margin-top:16px"><h3>Registro detalhado da inferência</h3><div class="log" id="inferLog" aria-live="polite">[INFERÊNCIA] Aguardando início...</div></div>
+  </section>
+
+  <section id="try-examples">
+    <h2>4. Testar os exemplos originais</h2>
+    <p>Selecione uma medição para preencher o simulador de inferência.</p>
+    <div class="btns" id="exampleButtons"></div>
+    <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Medição</th><th>Resultado esperado pela regra</th><th>Sinal</th></tr></thead><tbody id="exampleRows"></tbody></table></div>
+  </section>
+
+  <section id="limits">
+    <h2>5. Como interpretar corretamente</h2>
+    <ul>
+      <li><strong>Treinamento:</strong> procura limites com menor número de erros nos exemplos fornecidos.</li>
+      <li><strong>Inferência:</strong> compara uma medição nova com a faixa aprendida. Valor abaixo do limite inferior ou acima do superior gera alerta.</li>
+      <li><strong>Um instrumento:</strong> é suficiente para sinalizar valores atípicos de uma variável, desde que a escala e os limites façam sentido.</li>
+      <li><strong>Limitação:</strong> uma medição fora da faixa é apenas um sinal estatístico conforme esta regra; não prova defeito, evento climático ou risco.</li>
+      <li><strong>Dados reais:</strong> antes de usar operacionalmente, defina limites com histórico representativo, verifique falsos alertas e trate mudanças de escala/unidade.</li>
+    </ul>
+  </section>
+  <footer>Simulador didático em HTML, CSS e JavaScript puro · Não envia dados para nenhum servidor.</footer>
+</main>
+<script>
+"use strict";
+const exemplos = [
+  [0.00,1],[0.10,1],[0.20,1],[0.32,1],[0.33,0],[0.40,0],[0.50,0],
+  [0.60,0],[0.66,0],[0.67,1],[0.80,1],[0.90,1],[1.00,1]
+];
+const testes = [0.15,0.32,0.33,0.45,0.66,0.67,0.85];
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+let candidatos = [];
+for(let i=0;i<=100;i++) for(let j=i;j<=100;j++) candidatos.push([i/100,j/100]);
+let trainIndex=0, best=null, trainingDone=false, inferSteps=[], inferIndex=0, inferValue=null, model=null;
+const trainMessages = [
+  ["Carregando exemplos supervisionados","Cada par tem o formato {valor, classe esperada}. A classe 0 representa normal e a classe 1 representa anomalia."],
+  ["Gerando limites candidatos","O programa gera todos os pares de limites de 0,00 a 1,00, em passos de 0,01, com limite inferior menor ou igual ao superior."],
+  ["Avaliando os candidatos","Cada par é testado contra os 13 exemplos. Se a saída prevista for diferente da classe esperada, conta um erro."],
+  ["Selecionando a melhor faixa","O programa mantém o par com menor quantidade de erros. Em caso de empate, conserva o primeiro par encontrado."],
+  ["Finalizando o treinamento","O modelo guarda os dois limites, o número de erros e a quantidade de exemplos. Agora pode classificar novas medições."]
+];
+function classify(x,lo,hi){return (x<lo || x>hi)?1:0}
+function renderTrainingRows(){
+  $("trainingRows").innerHTML=exemplos.map(([x,y])=>`<tr><td>${fmt(x)}</td><td><span class="${y?'alert':'normal'}"><strong>${y}</strong> — ${y?'anomalia':'normal'}</span></td></tr>`).join("");
+}
+function appendLog(id,line){const el=$(id);if(el.textContent.includes("Aguardando"))el.textContent="";el.textContent += (el.textContent?"\n":"")+line;el.scrollTop=el.scrollHeight}
+function trainOneStep(){
+  if(trainingDone){appendLog("trainLog","[TREINO] Treinamento já concluído.");return}
+  trainIndex++;
+  const step = Math.min(trainIndex,5);
+  const [title,desc]=trainMessages[step-1];
+  $("trainingStep").innerHTML=`<span class="stepnum">${step}</span><strong>${title}</strong><p>${desc}</p>`;
+  if(step===1){
+    appendLog("trainLog","[TREINO 1/5] Carregando exemplos supervisionados...");
+    appendLog("trainLog",`[TREINO] Total de exemplos: ${exemplos.length}. Classe 0 = normal; classe 1 = anomalia.`);
+    $("trainingStats").textContent=`Exemplos carregados: ${exemplos.length}. Ainda não há limites escolhidos.`;
+  } else if(step===2){
+    appendLog("trainLog","[TREINO 2/5] Gerando combinações de limites candidatos...");
+    appendLog("trainLog",`[TREINO] Pares candidatos gerados: ${candidatos.length}.`);
+    $("trainingStats").textContent=`Candidatos disponíveis: ${candidatos.length.toLocaleString("pt-BR")}. Próxima etapa: avaliar erros.`;
+  } else if(step===3){
+    appendLog("trainLog","[TREINO 3/5] Avaliando todos os pares de limites...");
+    let minErr=Infinity, bestPair=null, ties=0;
+    candidatos.forEach(([lo,hi])=>{
+      const errors=exemplos.reduce((sum,[x,y])=>sum+(classify(x,lo,hi)!==y?1:0),0);
+      if(errors<minErr){minErr=errors;bestPair=[lo,hi];ties=1}
+      else if(errors===minErr)ties++;
+    });
+    best={errors:minErr,lo:bestPair[0],hi:bestPair[1],ties};
+    appendLog("trainLog",`[TREINO] Pares avaliados: ${candidatos.length}.`);
+    appendLog("trainLog",`[TREINO] Menor quantidade de erros encontrada: ${best.errors}.`);
+    $("trainingStats").textContent=`Pares avaliados: ${candidatos.length.toLocaleString("pt-BR")}. Melhor resultado provisório: ${best.errors} erro(s).`;
+  } else if(step===4){
+    if(!best) {trainIndex=2;return trainOneStep()}
+    appendLog("trainLog","[TREINO 4/5] Melhor faixa encontrada:");
+    appendLog("trainLog",`  Limite inferior: ${fmt(best.lo)}`);
+    appendLog("trainLog",`  Limite superior: ${fmt(best.hi)}`);
+    appendLog("trainLog",`  Erros nos exemplos: ${best.errors} de ${exemplos.length}.`);
+    $("trainingStats").textContent=`Faixa selecionada: ${fmt(best.lo)} a ${fmt(best.hi)} · Erros: ${best.errors}/${exemplos.length}.`;
+    updateRange(best.lo,best.hi);
+  } else if(step===5){
+    model={limite_inferior:best.lo,limite_superior:best.hi,erros:best.errors,total_exemplos:exemplos.length};
+    trainingDone=true;
+    appendLog("trainLog","[TREINO 5/5] Treinamento concluído.");
+    appendLog("trainLog",`[TREINO] Modelo: ${JSON.stringify(model)}`);
+    $("trainingStats").textContent=`Modelo pronto. Limite inferior ${fmt(model.limite_inferior)}; superior ${fmt(model.limite_superior)}; erros ${model.erros}/${model.total_exemplos}.`;
+    $("trainNext").disabled=true;
+    $("inferStart").disabled=false;
+    renderExampleTable();
+  }
+}
+function trainAll(){
+  while(!trainingDone) trainOneStep();
+}
+function resetTraining(){
+  trainIndex=0;best=null;trainingDone=false;model=null;
+  $("trainingStep").innerHTML='<span class="stepnum">0</span>Pronto para iniciar. Clique em “Próximo passo”.';
+  $("trainingStats").textContent="Ainda não foram avaliados candidatos.";
+  $("trainLog").textContent="[TREINO] Aguardando início...";
+  $("trainNext").disabled=false;$("inferStart").disabled=false;
+  resetInference();updateRange(.33,.66);
+}
+function updateRange(lo,hi){
+  $("lowBar").style.width=(lo*100)+"%";
+  $("midBar").style.width=((hi-lo)*100)+"%";
+  $("highBar").style.width=((1-hi)*100)+"%";
+  $("lowerLabel").textContent=fmt(lo);$("upperLabel").textContent=fmt(hi);
+}
+function startInference(){
+  if(!model){$("inferResult").className="result bad";$("inferResult").textContent="Treine o modelo antes de iniciar a inferência.";return}
+  const x=Number($("measurement").value);
+  if($("measurement").value.trim()===""||!Number.isFinite(x)||x<0||x>1){
+    $("inferResult").className="result bad";$("inferResult").textContent="Informe um número válido entre 0 e 1.";return;
+  }
+  inferValue=x;inferIndex=0;
+  inferSteps=[
+    `[INFERÊNCIA 1/4] Recebendo nova medição: ${fmt(x)}.`,
+    `[INFERÊNCIA 2/4] Faixa considerada normal: ${fmt(model.limite_inferior)} até ${fmt(model.limite_superior)}.`,
+    x<model.limite_inferior
+      ? `[INFERÊNCIA 3/4] Comparação: ${fmt(x)} < ${fmt(model.limite_inferior)}. A medição está abaixo do limite inferior.`
+      : x>model.limite_superior
+      ? `[INFERÊNCIA 3/4] Comparação: ${fmt(x)} > ${fmt(model.limite_superior)}. A medição está acima do limite superior.`
+      : `[INFERÊNCIA 3/4] Comparação: valor dentro dos limites (inclusive).`,
+    classify(x,model.limite_inferior,model.limite_superior)===1
+      ? "[INFERÊNCIA 4/4] Resultado: ANOMALIA (classe 1) — sinal final: ALERTA."
+      : "[INFERÊNCIA 4/4] Resultado: NORMAL (classe 0) — sinal final: SEM ALERTA."
+  ];
+  $("inferLog").textContent="[INFERÊNCIA] Iniciando...";
+  $("inferStep").textContent="Pronto para mostrar o passo 1 de 4.";
+  $("inferResult").className="result";
+  $("inferResult").textContent="Inferência iniciada. Clique em “Próximo passo”.";
+  $("inferNext").disabled=false;
+  nextInferenceStep();
+}
+function nextInferenceStep(){
+  if(inferIndex>=inferSteps.length)return;
+  const line=inferSteps[inferIndex];
+  appendLog("inferLog",line);
+  $("inferStep").textContent=`Passo ${inferIndex+1} de ${inferSteps.length}: ${line.replace(/^\[INFERÊNCIA \d\/\d\] /,"")}`;
+  inferIndex++;
+  if(inferIndex===inferSteps.length){
+    const alert=classify(inferValue,model.limite_inferior,model.limite_superior)===1;
+    $("inferResult").className="result "+(alert?"bad":"ok");
+    $("inferResult").textContent=alert?"ANOMALIA (1) — ALERTA":"NORMAL (0) — SEM ALERTA";
+    $("inferNext").disabled=true;
+  }
+}
+function resetInference(){
+  inferSteps=[];inferIndex=0;inferValue=null;
+  $("inferLog").textContent="[INFERÊNCIA] Aguardando início...";
+  $("inferStep").textContent="Treine o modelo e inicie uma inferência para ver os detalhes.";
+  $("inferResult").className="result";$("inferResult").textContent="Aguardando uma medição.";
+  $("inferNext").disabled=true;
+}
+function renderExampleTable(){
+  $("exampleRows").innerHTML=testes.map(x=>{
+    const y=classify(x,model.limite_inferior,model.limite_superior);
+    return `<tr><td>${fmt(x)}</td><td>${y===1?"Fora da faixa":"Dentro da faixa"}</td><td class="${y?"alert":"normal"}"><strong>${y?"ALERTA":"SEM ALERTA"}</strong></td></tr>`;
+  }).join("");
+}
+function renderExampleButtons(){
+  $("exampleButtons").innerHTML=testes.map(x=>`<button class="secondary" data-value="${x}">${fmt(x)}</button>`).join("");
+  $("exampleButtons").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
+    $("measurement").value=btn.dataset.value;
+    $("inference").scrollIntoView({behavior:"smooth",block:"start"});
+    if(model)startInference();
+  }));
+}
+$("trainNext").addEventListener("click",trainOneStep);
+$("trainAll").addEventListener("click",trainAll);
+$("trainReset").addEventListener("click",resetTraining);
+$("inferStart").addEventListener("click",startInference);
+$("inferNext").addEventListener("click",nextInferenceStep);
+$("inferReset").addEventListener("click",resetInference);
+renderTrainingRows();renderExampleButtons();updateRange(.33,.66);
+$("exampleRows").innerHTML='<tr><td colspan="3">Execute o treinamento para exibir os resultados.</td></tr>';
+</script>
+</body>
+</html>
