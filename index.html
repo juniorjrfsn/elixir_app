@@ -2,512 +2,543 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Neurônio Sinalizador de Anomalias — Treinamento e Inferência</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Neurônio Sinalizador de Anomalias — Passo a passo</title>
 <style>
-:root{--bg:#f3f7fc;--panel:#fff;--ink:#172b4d;--muted:#5c6f89;--blue:#1769aa;--blue2:#e8f3ff;--green:#14845b;--greenbg:#e6f7ef;--red:#c83245;--redbg:#fff0f1;--border:#d7e3f0;--shadow:0 8px 24px #163b6510}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-header{background:linear-gradient(120deg,#163e70,#1769aa);color:white;padding:30px max(20px,calc((100% - 1200px)/2))}
-header h1{margin:0 0 8px;font-size:clamp(1.6rem,3vw,2.4rem)}header p{margin:0;color:#d9edff;max-width:850px}
-main{max-width:1200px;margin:24px auto;padding:0 18px 40px}.notice{border-left:5px solid #e4a11b;background:#fff8e7;padding:14px 16px;border-radius:8px;margin-bottom:20px}
-section,.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow)}section{padding:22px;margin:18px 0}h2{margin:0 0 12px;font-size:1.45rem}h3{margin:0 0 8px;font-size:1.05rem}p{margin:8px 0}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{padding:16px;box-shadow:none}.pill{display:inline-block;padding:3px 9px;border-radius:99px;background:var(--blue2);color:var(--blue);font-size:.85rem;font-weight:700}.normal{color:var(--green)}.alert{color:var(--red)}.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}button{border:0;border-radius:9px;padding:10px 14px;background:var(--blue);color:white;font-weight:700;cursor:pointer}button.secondary{background:#e9eff6;color:var(--ink)}button:disabled{opacity:.45;cursor:not-allowed}input,select{font:inherit;padding:9px 10px;border:1px solid #b9cbe0;border-radius:8px;max-width:100%}label{display:block;font-weight:650;margin:10px 0 5px}.range{width:100%}.stepbox{padding:14px;border:1px solid var(--border);border-radius:10px;background:#f8fbff;margin-top:12px}.stepnum{display:inline-grid;place-items:center;background:var(--blue);color:#fff;border-radius:50%;width:30px;height:30px;font-weight:800;margin-right:8px}.bar{height:18px;background:#e5ebf3;border-radius:99px;overflow:hidden;display:flex;margin:16px 0 8px}.bar span{display:block;height:100%}.bar .low,.bar .high{background:#f6b8c0}.bar .mid{background:#8bd8b1}.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:.82rem}.result{padding:14px;border-radius:10px;font-weight:750;margin-top:12px}.result.ok{background:var(--greenbg);color:var(--green)}.result.bad{background:var(--redbg);color:var(--red)}.log{background:#101d2e;color:#d9e8fa;padding:15px;border-radius:10px;min-height:120px;max-height:360px;overflow:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:.94rem}th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border)}th{background:#f1f6fb}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}.dot.green{background:var(--green)}.dot.red{background:var(--red)}.code{background:#f0f4f9;padding:2px 5px;border-radius:5px;font-family:ui-monospace,monospace}footer{text-align:center;color:var(--muted);padding:20px}
-@media(max-width:760px){.grid,.grid3{grid-template-columns:1fr}section{padding:16px}header{padding:24px 18px}}
-</style>
-
-<style>
-/* Laboratório visual: fluxo interativo do classificador */
-#neuron-lab .network-shell{background:linear-gradient(145deg,#f7fbff,#edf5ff);border:1px solid #c9dff4;border-radius:14px;padding:12px;overflow:hidden}
-#neuron-lab svg{display:block;width:100%;height:auto;min-height:250px}
-#neuron-lab .node{fill:#fff;stroke:#8bb8e2;stroke-width:2}
-#neuron-lab .node.active{fill:#e1f2ff;stroke:#1769aa;stroke-width:3}
-#neuron-lab .node.alert-node{fill:#fff0f1;stroke:#c83245}
-#neuron-lab .node.normal-node{fill:#e6f7ef;stroke:#14845b}
-#neuron-lab .edge{stroke:#9ab3cc;stroke-width:3;fill:none}
-#neuron-lab .edge.hot{stroke:#1769aa;stroke-width:5}
-#neuron-lab .edge.bad{stroke:#c83245;stroke-width:5}
-#neuron-lab .net-label{font:700 14px system-ui;fill:#172b4d;text-anchor:middle}
-#neuron-lab .net-small{font:12px system-ui;fill:#5c6f89;text-anchor:middle}
-#neuron-lab .control-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
-#neuron-lab input[type=range]{width:100%;accent-color:#1769aa}
-#neuron-lab .metric{padding:12px;border:1px solid #d7e3f0;border-radius:10px;background:#fff}
-#neuron-lab .metric strong{font-size:1.35rem;display:block}
-#neuron-lab .step-list{display:grid;gap:8px}
-#neuron-lab .flow-step{padding:10px 12px;border-radius:9px;background:#f1f6fb;border-left:4px solid #c5d5e6}
-#neuron-lab .flow-step.current{background:#e8f3ff;border-left-color:#1769aa}
-#neuron-lab .flow-step.done{background:#e6f7ef;border-left-color:#14845b}
-@media(max-width:650px){#neuron-lab svg{min-height:200px}}
+:root{--bg:#f3f7fc;--panel:#fff;--ink:#172b4d;--muted:#5c6f89;--blue:#1769aa;--blue2:#e8f3ff;--green:#14845b;--greenbg:#e6f7ef;--red:#c83245;--redbg:#fff0f1;--amber:#e4a11b;--amberbg:#fff8e7;--border:#d7e3f0;--shadow:0 8px 24px #163b6510}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:56px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+header{background:linear-gradient(120deg,#163e70,#1769aa);color:#fff;padding:28px max(18px,calc((100% - 1200px)/2))}
+header h1{margin:0 0 8px;font-size:clamp(1.6rem,3vw,2.4rem)}header p{margin:0;color:#d9edff;max-width:880px}
+nav{position:sticky;top:0;z-index:30;background:#0f2f58f0;backdrop-filter:blur(6px)}
+nav .in{max-width:1200px;margin:auto;display:flex;gap:4px;overflow-x:auto;padding:4px 14px}
+nav a{color:#cfe5ff;text-decoration:none;padding:7px 12px;border-radius:7px;white-space:nowrap;font-weight:650;font-size:.92rem}
+nav a:hover{background:#ffffff1c;color:#fff}
+main{max-width:1200px;margin:22px auto;padding:0 16px 40px}
+section{background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:22px;margin:0 0 20px}
+h2{margin:0 0 8px;font-size:1.4rem}h3{margin:0 0 8px;font-size:1.05rem}p{margin:8px 0}.muted{color:var(--muted)}.note{font-size:.9rem;color:var(--muted)}
+.notice{border-left:5px solid var(--amber);background:var(--amberbg);padding:14px 16px;border-radius:8px;margin-bottom:20px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.gridA{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+@media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}section{padding:16px}}
+.card{border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:#fff}
+.card.tint{background:#f8fbff}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;background:var(--blue2);color:var(--blue);font-size:.84rem;font-weight:700}
+.pill.ok{background:var(--greenbg);color:var(--green)}.pill.bad{background:var(--redbg);color:var(--red)}.pill.warn{background:var(--amberbg);color:#8a5b00}
+.normal,.good{color:var(--green)}.alert,.bad{color:var(--red)}
+button{font:inherit;border:0;border-radius:9px;padding:9px 14px;background:var(--blue);color:#fff;font-weight:700;cursor:pointer}
+button:hover:not(:disabled){filter:brightness(1.08)}button:disabled{opacity:.4;cursor:not-allowed}
+button.sec{background:#e9eff6;color:var(--ink)}button.go{background:var(--green)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ffb74d;outline-offset:1px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+input,select{font:inherit;padding:8px 10px;border:1px solid #b9cbe0;border-radius:8px;max-width:100%;background:#fff;color:var(--ink)}
+input[type=range]{width:100%;padding:0;accent-color:var(--blue)}
+label{display:block;font-weight:650;margin:8px 0 4px;font-size:.92rem}
+.dots{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.sdot{display:inline-flex;align-items:center;gap:7px;padding:6px 12px 6px 6px;border-radius:99px;background:#e9eff6;color:var(--ink);font-size:.88rem}
+.sdot b{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#fff;color:var(--blue)}
+.sdot.done{background:#cfeee0}.sdot.on{background:var(--blue);color:#fff}.sdot.on b{background:#fff}
+.stepcard{border-left:5px solid var(--blue);background:#f6faff;border-radius:0 12px 12px 0;padding:12px 16px}
+.stepcard h3{display:flex;gap:8px;align-items:center;color:var(--blue)}
+.math{background:#f2f6fb;border:1px solid #e1e9f2;border-radius:8px;padding:8px 10px;margin:8px 0;overflow-x:auto;white-space:pre-wrap;font-size:.9rem}
+pre.code{background:#13243b;color:#d9e8fa;border-radius:10px;padding:12px;margin:8px 0;overflow:auto;font-size:.82rem;line-height:1.5}
+.log{background:#101d2e;color:#d9e8fa;padding:14px;border-radius:10px;min-height:110px;max-height:300px;overflow:auto;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
+canvas{display:block;width:100%;height:auto;border:1px solid var(--border);border-radius:10px;background:#fff}
+.tw{overflow:auto;border:1px solid var(--border);border-radius:10px;max-height:340px}
+table{width:100%;border-collapse:collapse;font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:6px 9px;border-bottom:1px solid #e3eaf2;white-space:nowrap}
+th{background:#eef4fb;color:#24486e;position:sticky;top:0}th:first-child,td:first-child{text-align:left}
+tr:last-child td{border-bottom:0}tr.sel td{background:#fff4d6}tr.bad td{background:#fff0f1}tr.clk{cursor:pointer}tr.clk:hover td{background:#eef6ff}tr.sum td{background:#f1ebff;font-weight:700}
+.result{padding:14px;border-radius:10px;font-weight:800;margin-top:10px;font-size:1.1rem}
+.result.ok{background:var(--greenbg);color:var(--green)}.result.bad{background:var(--redbg);color:var(--red)}.result.idle{background:#eef3f9;color:var(--muted);font-weight:600}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0}
+.fb{padding:8px 12px;border-radius:10px;border:2px solid var(--border);background:#fff;font-weight:700;font-size:.9rem}
+.fb.done{background:var(--greenbg);border-color:#8bd8b1}.fb.on{background:var(--blue2);border-color:var(--blue);box-shadow:0 0 0 3px #1769aa22}.fb.skip{border-style:dashed;opacity:.45}
+.fa{color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted);margin:8px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.legend i.sq{border-radius:3px}
+.metric{padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}.metric span{display:block;color:var(--muted);font-size:.82rem}.metric strong{font:700 1.2rem ui-monospace,Consolas,monospace}
+.bar{height:16px;border-radius:99px;overflow:hidden;display:flex;margin:12px 0 6px;background:#e5ebf3}.bar span{display:block;height:100%}
+.axis{display:flex;justify-content:space-between;color:var(--muted);font-size:.82rem}
+svg.nn{width:100%;height:auto;display:block;background:linear-gradient(145deg,#f7fbff,#edf5ff);border:1px solid #c9dff4;border-radius:12px}
+svg.nn text{font-family:system-ui,sans-serif}
+footer{text-align:center;color:var(--muted);padding:18px}
 </style>
 </head>
 <body>
 <header>
   <h1>Neurônio Sinalizador de Anomalias</h1>
-  <p>Guia interativo de treinamento e inferência — um único valor de entrada, uma faixa normal e dois sinais: normal (0) ou anomalia (1).</p>
+  <p>Guia interativo e passo a passo do script <code>neuronio_treinavel.exs</code>: veja no gráfico cada candidato sendo avaliado no treinamento e escolha qualquer medição para acompanhar a inferência etapa por etapa.</p>
 </header>
+<nav><div class="in"><a href="#visao">1 · Visão geral</a><a href="#treino">2 · Treinamento</a><a href="#infer">3 · Inferência</a><a href="#neuronio">4 · Versão neural</a><a href="#notas">5 · Interpretação</a></div></nav>
+
 <main>
-  <div class="notice"><strong>Importante:</strong> esta demonstração reproduz a lógica do script Elixir. Apesar do nome original, o algoritmo é um classificador por limites pesquisados, não uma rede neural tradicional com pesos. Os dados são exemplos didáticos, não medições reais de um instrumento.</div>
+<div class="notice"><strong>Importante:</strong> apesar do nome, o script Elixir <em>não</em> é uma rede neural: ele testa todas as faixas possíveis (força bruta) e guarda a que erra menos. A seção 4 resolve o mesmo problema com um neurônio de verdade (pesos e viés ajustados por gradiente), também passo a passo. Os dados são exemplos didáticos, não medições reais.</div>
 
-  <section id="overview">
-    <h2>1. Visão geral do processo</h2>
-    <div class="grid3">
-      <div class="card"><span class="pill">Entrada</span><h3 style="margin-top:10px">Uma medição</h3><p>Um número fornecido por uma fonte única: sensor, instrumento ou arquivo.</p></div>
-      <div class="card"><span class="pill">Modelo</span><h3 style="margin-top:10px">Faixa aprendida</h3><p>O treinamento procura o limite inferior e o superior que melhor classificam os exemplos.</p></div>
-      <div class="card"><span class="pill">Saída</span><h3 style="margin-top:10px">Sinalizador</h3><p><strong class="normal">0 = normal</strong> dentro da faixa; <strong class="alert">1 = anomalia</strong> fora da faixa.</p></div>
-    </div>
-    <h3 style="margin-top:20px">Faixa aprendida no exemplo</h3>
-    <div class="bar" aria-label="Faixa normal entre 0,33 e 0,66"><span class="low" style="width:33%"></span><span class="mid" style="width:33%"></span><span class="high" style="width:34%"></span></div>
-    <div class="axis"><span>0,00</span><span>0,33 — início do normal</span><span>0,66 — fim do normal</span><span>1,00</span></div>
-    <p><span class="dot red"></span>Fora da faixa: alerta. <span class="dot green"></span>Dentro da faixa, incluindo os limites: sem alerta.</p>
-  </section>
+<!-- 1 -->
+<section id="visao">
+  <h2>1. Visão geral</h2>
+  <div class="grid3">
+    <div class="card"><span class="pill">Entrada</span><h3 style="margin-top:8px">Uma medição</h3><p>Um número entre 0 e 1 vindo de um sensor, instrumento ou arquivo.</p></div>
+    <div class="card"><span class="pill">Modelo</span><h3 style="margin-top:8px">Faixa normal</h3><p>Dois limites aprendidos: <b>inferior</b> e <b>superior</b>. Os próprios limites são considerados normais.</p></div>
+    <div class="card"><span class="pill">Saída</span><h3 style="margin-top:8px">Sinalizador</h3><p><b class="normal">0 = normal</b> (dentro da faixa) · <b class="alert">1 = anomalia</b> (fora da faixa).</p></div>
+  </div>
+  <h3 style="margin-top:18px">Resultado do seu terminal (<code>elixir neuronio_treinavel.exs</code>)</h3>
+  <div class="bar"><span style="width:33%;background:#f6b8c0"></span><span style="width:33%;background:#8bd8b1"></span><span style="width:34%;background:#f6b8c0"></span></div>
+  <div class="axis"><span>0,00</span><span>0,33 — início do normal</span><span>0,66 — fim do normal</span><span>1,00</span></div>
+  <p class="note">5151 pares testados · melhor faixa 0,33 a 0,66 · 0 erros em 13 exemplos. As seções 2 e 3 recalculam tudo isso ao vivo, no seu navegador.</p>
+</section>
 
-  <section id="training">
-    <h2>2. Simulador de treinamento passo a passo</h2>
-    <p class="muted">O treinamento usa 13 exemplos rotulados. Para cada par de limites, conta quantos exemplos seriam classificados incorretamente e conserva o par com menos erros.</p>
-    <div class="grid">
-      <div class="card">
-        <h3>Exemplos supervisionados</h3>
-        <div class="tablewrap"><table><thead><tr><th>Valor</th><th>Classe esperada</th></tr></thead><tbody id="trainingRows"></tbody></table></div>
-        <p class="muted">Classe 0 = normal · Classe 1 = anomalia</p>
-      </div>
-      <div class="card">
-        <h3>Passos do treinamento</h3>
-        <div id="trainingStep" class="stepbox" aria-live="polite"><span class="stepnum">0</span>Pronto para iniciar. Clique em “Próximo passo”.</div>
-        <div id="trainingStats" class="stepbox">Ainda não foram avaliados candidatos.</div>
+<!-- 2 -->
+<section id="treino">
+  <h2>2. Treinamento passo a passo</h2>
+  <p class="muted">Use <b>Próximo passo</b> para percorrer as 5 etapas do script. Na etapa 3 você controla cada candidato (um por um, em saltos, ou pulando direto para a próxima melhoria) e vê o gráfico e o mapa de erros reagirem.</p>
+  <div class="dots" id="trDots"></div>
+  <div class="btns" style="margin:0 0 14px">
+    <button class="sec" id="trPrev">◀ Passo anterior</button>
+    <button id="trNext">Próximo passo ▶</button>
+    <button class="sec" id="trAll">⏭ Executar treinamento completo</button>
+    <button class="sec" id="trReset">↺ Reiniciar</button>
+  </div>
+  <div class="grid2">
+    <div>
+      <div class="stepcard" id="stCard"></div>
+      <div class="card tint" id="evalBox" style="margin-top:12px">
+        <h3>Controle dos candidatos</h3>
+        <div id="candInfo" class="math" aria-live="polite"></div>
+        <label for="candSlider">Candidato <b id="candNum"></b></label>
+        <input type="range" id="candSlider" min="0" max="5150" value="0">
         <div class="btns">
-          <button id="trainNext">Próximo passo</button>
-          <button id="trainAll" class="secondary">Executar treinamento completo</button>
-          <button id="trainReset" class="secondary">Reiniciar</button>
+          <button class="sec" id="cFirst" title="Primeiro candidato">⏮</button>
+          <button class="sec" id="cPrev">◀ −1</button>
+          <button id="cNext">+1 ▶</button>
+          <button class="sec" id="cTen">+10 ▶▶</button>
+          <button class="sec" id="cPI">⏪ melhoria anterior</button>
+          <button class="go" id="cNI">próxima melhoria ⏩</button>
+        </div>
+        <div class="btns">
+          <button class="sec" id="cPlay">▶ Reproduzir</button>
+          <label style="margin:0;font-weight:600">velocidade
+            <select id="cSpeed"><option value="1">1 por quadro</option><option value="5" selected>5 por quadro</option><option value="25">25 por quadro</option><option value="100">100 por quadro</option></select></label>
+          <button class="sec" id="cLast">⏭ último</button>
         </div>
       </div>
+      <h3 style="margin-top:16px">Exemplos e faixa em teste</h3>
+      <canvas id="trChart" width="900" height="330" role="img" aria-label="Exemplos de treinamento e faixa candidata"></canvas>
+      <div class="legend"><span><i style="background:#c83245"></i>anomalia esperada (1)</span><span><i style="background:#14845b"></i>normal esperado (0)</span><span><i class="sq" style="background:#8bd8b1"></i>faixa normal do candidato</span><span><i class="sq" style="background:#f6b8c0"></i>região de alerta</span><span>◯ vermelho com ✗ = exemplo classificado errado</span><span>┄ azul = melhor até agora</span></div>
+      <div class="tw" style="margin-top:8px"><table><thead><tr><th>x</th><th>Esperado</th><th>Comparação</th><th>Previsto</th><th></th></tr></thead><tbody id="trRows"></tbody></table></div>
     </div>
-    <div style="margin-top:16px"><h3>Registro detalhado (IO.puts equivalente)</h3><div class="log" id="trainLog" aria-live="polite">[TREINO] Aguardando início...</div></div>
-  </section>
-
-  <section id="inference">
-    <h2>3. Simulador de inferência passo a passo</h2>
-    <p>Depois de treinar, forneça uma medição de teste. O simulador mostra cada comparação e o sinal final.</p>
-    <div class="grid">
-      <div class="card">
-        <label for="measurement">Nova medição (entre 0 e 1)</label>
-        <input id="measurement" type="number" min="0" max="1" step="0.01" value="0.45">
-        <div class="btns"><button id="inferStart">Iniciar inferência</button><button id="inferNext" class="secondary" disabled>Próximo passo</button><button id="inferReset" class="secondary">Limpar inferência</button></div>
-        <div id="inferResult" class="result" aria-live="polite">Aguardando uma medição.</div>
-      </div>
-      <div class="card">
-        <h3>Passo atual</h3>
-        <div id="inferStep" class="stepbox">Treine o modelo e inicie uma inferência para ver os detalhes.</div>
-        <h3 style="margin-top:14px">Faixa normal</h3>
-        <div class="bar"><span class="low" id="lowBar" style="width:33%"></span><span class="mid" id="midBar" style="width:33%"></span><span class="high" id="highBar" style="width:34%"></span></div>
-        <div class="axis"><span>0</span><span id="lowerLabel">0,33</span><span id="upperLabel">0,66</span><span>1</span></div>
-      </div>
-    </div>
-    <div style="margin-top:16px"><h3>Registro detalhado da inferência</h3><div class="log" id="inferLog" aria-live="polite">[INFERÊNCIA] Aguardando início...</div></div>
-  </section>
-
-  <section id="try-examples">
-    <h2>4. Testar os exemplos originais</h2>
-    <p>Selecione uma medição para preencher o simulador de inferência.</p>
-    <div class="btns" id="exampleButtons"></div>
-    <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Medição</th><th>Resultado esperado pela regra</th><th>Sinal</th></tr></thead><tbody id="exampleRows"></tbody></table></div>
-  </section>
-
-
-  <section id="charts">
-    <h2>Gráficos didáticos do treinamento e da inferência</h2>
-    <p class="muted">Os gráficos são desenhados em JavaScript no próprio navegador e acompanham os passos do simulador.</p>
-    <div class="grid">
-      <div class="card">
-        <h3>Gráfico A — exemplos de treinamento e faixa aprendida</h3>
-        <p class="muted">Cada ponto representa um exemplo. Vermelho = anomalia esperada; verde = normal esperado. As linhas verticais mostram os limites selecionados.</p>
-        <canvas id="trainingChart" width="760" height="300" style="width:100%;height:auto;display:block" role="img" aria-label="Gráfico dos exemplos de treinamento e limites aprendidos"></canvas>
-        <div id="trainingChartCaption" class="stepbox">Avance no treinamento para visualizar os limites encontrados.</div>
-      </div>
-      <div class="card">
-        <h3>Gráfico B — inferência da medição atual</h3>
-        <p class="muted">O marcador mostra onde a medição cai na escala de 0 a 1 e se está dentro ou fora da faixa normal.</p>
-        <canvas id="inferenceChart" width="760" height="260" style="width:100%;height:auto;display:block" role="img" aria-label="Gráfico da medição atual em relação aos limites normais"></canvas>
-        <div id="inferenceChartCaption" class="stepbox">Inicie uma inferência para posicionar a medição no gráfico.</div>
-      </div>
-    </div>
-    <div class="card" style="margin-top:16px">
-      <h3>Gráfico C — comparação entre esperado e previsto</h3>
-      <p class="muted">Disponível após o treinamento. Cada par de barras compara a classe esperada dos exemplos com a classe prevista pela faixa aprendida.</p>
-      <canvas id="comparisonChart" width="1000" height="320" style="width:100%;height:auto;display:block" role="img" aria-label="Comparação das classes esperadas e previstas"></canvas>
-      <div id="comparisonCaption" class="stepbox">O gráfico será atualizado quando o treinamento for concluído.</div>
-    </div>
-  </section>
-
-
-<section id="neuron-lab">
-  <h2>6. Neurônio sinalizador interativo — caminho da medição</h2>
-  <p class="muted">Explore como uma medição percorre o classificador. Para manter fidelidade ao arquivo Elixir, o diagrama mostra um <strong>neurônio lógico de decisão</strong>: duas comparações com os limites alimentam a decisão final. Não é uma rede neural tradicional com pesos treináveis.</p>
-  <div class="control-grid">
-    <div class="card">
-      <label for="netValue">Nova medição: <strong id="netValueLabel">0,45</strong></label>
-      <input id="netValue" type="range" min="0" max="1" step="0.01" value="0.45">
-      <label for="netValueNum">Valor exato (0 a 1)</label><input id="netValueNum" type="number" min="0" max="1" step="0.01" value="0.45">
-    </div>
-    <div class="card">
-      <label for="netLow">Limite inferior: <strong id="netLowLabel">0,33</strong></label>
-      <input id="netLow" type="range" min="0" max="1" step="0.01" value="0.33">
-      <label for="netHigh">Limite superior: <strong id="netHighLabel">0,66</strong></label>
-      <input id="netHigh" type="range" min="0" max="1" step="0.01" value="0.66">
-      <p class="note">Ajuste os limites para simular outra faixa normal.</p>
-    </div>
-    <div class="card">
-      <h3>Resultado ao vivo</h3>
-      <div class="metric"><strong id="netClass">NORMAL (0)</strong><span id="netReason">Valor dentro dos limites.</span></div>
-      <div class="btns"><button id="netAnimate">▶ Percorrer o caminho</button><button id="netReset" class="secondary">Restaurar exemplo</button></div>
-    </div>
-  </div>
-  <div class="grid" style="margin-top:14px">
-    <div class="network-shell">
-      <h3>Fluxo da medição pela rede lógica</h3>
-      <svg id="neuronSvg" viewBox="0 0 760 330" role="img" aria-label="Diagrama interativo do caminho da medição pelas comparações e decisão"></svg>
-      <p class="note">Azul = caminho ativo; vermelho = comparação que dispara alerta; verde = saída normal.</p>
-    </div>
-    <div class="card">
-      <h3>Passo a passo da inferência</h3>
-      <div id="netSteps" class="step-list" aria-live="polite"></div>
-      <h3 style="margin-top:16px">Indicadores do modelo</h3>
-      <div class="grid3">
-        <div class="metric"><span class="muted">Entrada</span><strong id="netMetricX">0,45</strong></div>
-        <div class="metric"><span class="muted">Distância da faixa</span><strong id="netDistance">0,00</strong></div>
-        <div class="metric"><span class="muted">Classe</span><strong id="netMetricY">0</strong></div>
-      </div>
+    <div>
+      <h3>Mapa dos 5151 candidatos</h3>
+      <canvas id="heat" width="560" height="552" style="cursor:crosshair" role="img" aria-label="Mapa de erros por par de limites"></canvas>
+      <div class="legend"><span><i style="background:#14845b"></i>0 erros</span><span><i style="background:hsl(210,65%,30%)"></i>poucos erros</span><span><i style="background:hsl(210,65%,88%)"></i>muitos erros</span><span><i style="background:#e8eef5;border:1px solid #c9d6e5"></i>ainda não avaliado</span></div>
+      <p class="note" id="heatCap">Eixo horizontal = limite inferior; vertical = limite superior. Clique num ponto para avaliar aquele candidato. Anel amarelo = melhor até agora.</p>
+      <h3 style="margin-top:12px">Registro (equivalente aos <code>IO.puts</code>)</h3>
+      <div class="log" id="trLog" aria-live="polite"></div>
     </div>
   </div>
 </section>
 
-  <section id="limits">
-    <h2>5. Como interpretar corretamente</h2>
-    <ul>
-      <li><strong>Treinamento:</strong> procura limites com menor número de erros nos exemplos fornecidos.</li>
-      <li><strong>Inferência:</strong> compara uma medição nova com a faixa aprendida. Valor abaixo do limite inferior ou acima do superior gera alerta.</li>
-      <li><strong>Um instrumento:</strong> é suficiente para sinalizar valores atípicos de uma variável, desde que a escala e os limites façam sentido.</li>
-      <li><strong>Limitação:</strong> uma medição fora da faixa é apenas um sinal estatístico conforme esta regra; não prova defeito, evento climático ou risco.</li>
-      <li><strong>Dados reais:</strong> antes de usar operacionalmente, defina limites com histórico representativo, verifique falsos alertas e trate mudanças de escala/unidade.</li>
-    </ul>
-  </section>
-  <footer>Simulador didático em HTML, CSS e JavaScript puro · Não envia dados para nenhum servidor.</footer>
+<!-- 3 -->
+<section id="infer">
+  <h2>3. Inferência passo a passo</h2>
+  <p class="muted">Escolha a medição (campo, controle deslizante, botões ou clicando no gráfico). Depois avance etapa por etapa e acompanhe o que acontece no gráfico. O modelo usado é a faixa encontrada no treinamento: <b id="mdlTxt"></b>.</p>
+  <div class="grid2">
+    <div>
+      <div class="card tint">
+        <div class="gridA">
+          <div><label for="inX">Medição (0 a 1)</label><input id="inX" type="number" min="0" max="1" step="0.01" value="0.45" style="width:100%"></div>
+          <div><label for="inR">Ajuste fino: <b id="inRL"></b></label><input id="inR" type="range" min="0" max="1" step="0.01" value="0.45"></div>
+        </div>
+        <label>Exemplos do script</label>
+        <div class="btns" style="margin-top:0" id="inChips"></div>
+      </div>
+      <div class="flow" id="inFlow"></div>
+      <canvas id="inChart" width="900" height="280" style="cursor:pointer" role="img" aria-label="Medição em relação à faixa normal"></canvas>
+      <p class="note">Clique ou arraste no gráfico para escolher outra medição. Os pontinhos acima da barra são os exemplos de treinamento.</p>
+    </div>
+    <div>
+      <div class="stepcard" id="inCard"></div>
+      <div class="btns">
+        <button class="sec" id="inFirst">⏮ Recomeçar</button>
+        <button class="sec" id="inPrev">◀ Anterior</button>
+        <button id="inNext">Próximo ▶</button>
+        <button class="sec" id="inPlay">▶ Reproduzir</button>
+        <button class="sec" id="inEnd">⏭ Ir ao fim</button>
+      </div>
+      <div class="result idle" id="inRes" aria-live="polite">Avance até a última etapa para ver o sinal.</div>
+      <h3 style="margin-top:14px">Registro da inferência</h3>
+      <div class="log" id="inLog" aria-live="polite"></div>
+    </div>
+  </div>
+  <h3 style="margin-top:16px">Os 7 exemplos do script <span class="note">(clique numa linha para estudá-la acima)</span></h3>
+  <div class="tw"><table><thead><tr><th>Medição</th><th>Comparação</th><th>Classe</th><th>Sinal</th></tr></thead><tbody id="inRows"></tbody></table></div>
+</section>
+
+<!-- 4 -->
+<section id="neuronio">
+  <h2>4. Versão neural: um neurônio com pesos e viés</h2>
+  <p>Aqui o mesmo problema é resolvido por <b>descida do gradiente</b>. Um neurônio calcula <span class="mono">z = Σ xᵢwᵢ + b = wᵀx</span> e aplica a sigmoide <span class="mono">σ(z)</span>. Como uma reta não separa a faixa “normal no meio”, o atributo <span class="mono">f = |x − centro| × 10</span> mede a distância ao centro: normais ficam com f pequeno, anomalias com f grande. Quem aprende são <b>w</b> e <b>b</b>.</p>
+  <svg id="nlSvg" class="nn" viewBox="0 0 780 250" role="img" aria-label="Diagrama do neurônio"></svg>
+  <div class="grid2" style="margin-top:16px">
+    <div>
+      <h3>Treinamento: uma época por dentro</h3>
+      <div class="dots" id="nlDots"></div>
+      <div class="stepcard" id="nlCard"></div>
+      <div class="btns"><button class="sec" id="nlPrev">◀ Anterior</button><button id="nlNext">Próximo ▶</button></div>
+    </div>
+    <div>
+      <h3>Curva aprendida p(anomalia) × medição</h3>
+      <canvas id="nlChart" width="900" height="300" style="cursor:crosshair" role="img" aria-label="Probabilidade de anomalia aprendida"></canvas>
+      <div class="legend"><span><i style="background:#c83245"></i>anomalia (y=1)</span><span><i style="background:#14845b"></i>normal (y=0)</span><span>linha vermelha/verde = previsão do neurônio</span><span>┆ segmentos = erro de cada exemplo</span></div>
+      <div class="note" id="nlHover">Passe o mouse sobre o gráfico.</div>
+    </div>
+  </div>
+  <div class="card tint" style="margin-top:14px">
+    <h3>Controles do treinamento</h3>
+    <div class="btns" style="margin-top:0">
+      <button id="nlPlay">▶ Treinar (animado)</button><button class="sec" id="nl1">+1 época</button><button class="sec" id="nl100">+100</button><button class="sec" id="nl1000">+1000</button><button class="sec" id="nlReset">↺ Reiniciar pesos</button><button class="sec" id="nlRand">🎲 Pesos aleatórios</button>
+    </div>
+    <div class="gridA">
+      <div><label for="nlOpt">Otimizador</label><select id="nlOpt"><option value="adam">Adam (rápido)</option><option value="sgd">Gradiente simples (didático)</option></select></div>
+      <div><label for="nlLr">Taxa de aprendizado</label><input id="nlLr" type="number" min="0.001" max="2" step="0.01" value="0.05" style="width:100%"></div>
+      <div><label for="nlSpd">Velocidade: <b id="nlSpdL">3</b> épocas/quadro</label><input id="nlSpd" type="range" min="1" max="40" value="3"></div>
+      <div><label for="nlC">Centro: <b id="nlCL"></b></label><input id="nlC" type="range" min="0.3" max="0.7" step="0.005" value="0.495"><button class="sec" id="nlAuto" style="margin-top:6px">Centro automático</button></div>
+      <div><label for="nlWs">Peso w: <b id="nlWL"></b></label><input id="nlWs" type="range" min="-10" max="40" step="0.1"></div>
+      <div><label for="nlBs">Viés b: <b id="nlBL"></b></label><input id="nlBs" type="range" min="-60" max="10" step="0.1"></div>
+    </div>
+    <label style="font-weight:400"><input type="checkbox" id="nlStop" checked> parar ao zerar os erros</label>
+    <div class="btns"><select id="nlMode" aria-label="Modo do clique no gráfico"><option value="add">Clique no gráfico: adicionar exemplo (acima da linha tracejada = anomalia)</option><option value="del">Clique no gráfico: remover exemplo</option><option value="insp">Clique no gráfico: escolher medição da inferência</option></select>
+      <button class="sec" data-pre="orig">Dados originais</button><button class="sec" data-pre="n">Faixa estreita</button><button class="sec" data-pre="w">Faixa larga</button></div>
+  </div>
+  <div class="gridA" id="nlKpi" style="margin-top:14px"></div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card"><h3>Erro e acertos por época</h3><canvas id="nlHist" width="560" height="230"></canvas></div>
+    <div class="card"><h3>Faixa do neurônio × força bruta</h3><div id="nlCmp" class="math"></div><p class="note">Com dados rotulados que cabem numa faixa, os dois caminhos chegam à mesma conclusão; o neurônio dá ainda uma <em>probabilidade</em>, e não só 0 ou 1.</p></div>
+  </div>
+  <h3 style="margin-top:18px">Inferência no neurônio, etapa por etapa</h3>
+  <div class="grid2">
+    <div>
+      <div class="card tint"><label for="nlX">Medição x = <b id="nlXL"></b></label><input id="nlX" type="range" min="0" max="1" step="0.01" value="0.45"><div class="btns" id="nlChips"></div></div>
+      <div class="dots" id="nlIDots"></div>
+    </div>
+    <div>
+      <div class="stepcard" id="nlICard"></div>
+      <div class="btns"><button class="sec" id="nlIPrev">◀ Anterior</button><button id="nlINext">Próximo ▶</button><button class="sec" id="nlIEnd">⏭ Ir ao fim</button></div>
+    </div>
+  </div>
+  <div class="log" id="nlLog" style="margin-top:14px" aria-live="polite"></div>
+</section>
+
+<!-- 5 -->
+<section id="notas">
+  <h2>5. Como interpretar corretamente</h2>
+  <ul>
+    <li><b>Treinamento (Elixir):</b> procura os limites que erram menos nos exemplos fornecidos; em caso de empate, mantém o primeiro encontrado (só troca se <span class="mono">erros_atual &lt; melhor_erro</span>).</li>
+    <li><b>Inferência:</b> abaixo do limite inferior ou acima do superior gera alerta; os limites em si são normais. O <span class="mono">cond</span> para na primeira comparação verdadeira.</li>
+    <li><b>Limitação:</b> fora da faixa é só um sinal estatístico conforme esta regra; não prova defeito, evento ou risco.</li>
+    <li><b>Dados reais:</b> defina limites com histórico representativo, verifique falsos alertas e trate mudanças de escala ou unidade.</li>
+    <li><b>Mínimo local não existe aqui:</b> a busca é exaustiva (garante o melhor par da grade de 0,01). O neurônio usa gradiente e depende de taxa de aprendizado, otimizador e pesos iniciais.</li>
+  </ul>
+</section>
 </main>
+<footer>Simulador didático em HTML, CSS e JavaScript puro · nenhum dado é enviado a servidores.</footer>
+
 <script>
 "use strict";
-const exemplos = [
-  [0.00,1],[0.10,1],[0.20,1],[0.32,1],[0.33,0],[0.40,0],[0.50,0],
-  [0.60,0],[0.66,0],[0.67,1],[0.80,1],[0.90,1],[1.00,1]
-];
-const testes = [0.15,0.32,0.33,0.45,0.66,0.67,0.85];
-const $ = id => document.getElementById(id);
-const fmt = n => Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
-let candidatos = [];
-for(let i=0;i<=100;i++) for(let j=i;j<=100;j++) candidatos.push([i/100,j/100]);
-let trainIndex=0, best=null, trainingDone=false, inferSteps=[], inferIndex=0, inferValue=null, model=null;
-const trainMessages = [
-  ["Carregando exemplos supervisionados","Cada par tem o formato {valor, classe esperada}. A classe 0 representa normal e a classe 1 representa anomalia."],
-  ["Gerando limites candidatos","O programa gera todos os pares de limites de 0,00 a 1,00, em passos de 0,01, com limite inferior menor ou igual ao superior."],
-  ["Avaliando os candidatos","Cada par é testado contra os 13 exemplos. Se a saída prevista for diferente da classe esperada, conta um erro."],
-  ["Selecionando a melhor faixa","O programa mantém o par com menor quantidade de erros. Em caso de empate, conserva o primeiro par encontrado."],
-  ["Finalizando o treinamento","O modelo guarda os dois limites, o número de erros e a quantidade de exemplos. Agora pode classificar novas medições."]
-];
-function classify(x,lo,hi){return (x<lo || x>hi)?1:0}
-function renderTrainingRows(){
-  $("trainingRows").innerHTML=exemplos.map(([x,y])=>`<tr><td>${fmt(x)}</td><td><span class="${y?'alert':'normal'}"><strong>${y}</strong> — ${y?'anomalia':'normal'}</span></td></tr>`).join("");
-}
-function appendLog(id,line){const el=$(id);if(el.textContent.includes("Aguardando"))el.textContent="";el.textContent += (el.textContent?"\n":"")+line;el.scrollTop=el.scrollHeight}
-function trainOneStep(){
-  if(trainingDone){appendLog("trainLog","[TREINO] Treinamento já concluído.");return}
-  trainIndex++;
-  const step = Math.min(trainIndex,5);
-  const [title,desc]=trainMessages[step-1];
-  $("trainingStep").innerHTML=`<span class="stepnum">${step}</span><strong>${title}</strong><p>${desc}</p>`;
-  if(step===1){
-    appendLog("trainLog","[TREINO 1/5] Carregando exemplos supervisionados...");
-    appendLog("trainLog",`[TREINO] Total de exemplos: ${exemplos.length}. Classe 0 = normal; classe 1 = anomalia.`);
-    $("trainingStats").textContent=`Exemplos carregados: ${exemplos.length}. Ainda não há limites escolhidos.`;
-  } else if(step===2){
-    appendLog("trainLog","[TREINO 2/5] Gerando combinações de limites candidatos...");
-    appendLog("trainLog",`[TREINO] Pares candidatos gerados: ${candidatos.length}.`);
-    $("trainingStats").textContent=`Candidatos disponíveis: ${candidatos.length.toLocaleString("pt-BR")}. Próxima etapa: avaliar erros.`;
-  } else if(step===3){
-    appendLog("trainLog","[TREINO 3/5] Avaliando todos os pares de limites...");
-    let minErr=Infinity, bestPair=null, ties=0;
-    candidatos.forEach(([lo,hi])=>{
-      const errors=exemplos.reduce((sum,[x,y])=>sum+(classify(x,lo,hi)!==y?1:0),0);
-      if(errors<minErr){minErr=errors;bestPair=[lo,hi];ties=1}
-      else if(errors===minErr)ties++;
-    });
-    best={errors:minErr,lo:bestPair[0],hi:bestPair[1],ties};
-    appendLog("trainLog",`[TREINO] Pares avaliados: ${candidatos.length}.`);
-    appendLog("trainLog",`[TREINO] Menor quantidade de erros encontrada: ${best.errors}.`);
-    $("trainingStats").textContent=`Pares avaliados: ${candidatos.length.toLocaleString("pt-BR")}. Melhor resultado provisório: ${best.errors} erro(s).`;
-  } else if(step===4){
-    if(!best) {trainIndex=2;return trainOneStep()}
-    appendLog("trainLog","[TREINO 4/5] Melhor faixa encontrada:");
-    appendLog("trainLog",`  Limite inferior: ${fmt(best.lo)}`);
-    appendLog("trainLog",`  Limite superior: ${fmt(best.hi)}`);
-    appendLog("trainLog",`  Erros nos exemplos: ${best.errors} de ${exemplos.length}.`);
-    $("trainingStats").textContent=`Faixa selecionada: ${fmt(best.lo)} a ${fmt(best.hi)} · Erros: ${best.errors}/${exemplos.length}.`;
-    updateRange(best.lo,best.hi);
-  } else if(step===5){
-    model={limite_inferior:best.lo,limite_superior:best.hi,erros:best.errors,total_exemplos:exemplos.length};
-    trainingDone=true;
-    appendLog("trainLog","[TREINO 5/5] Treinamento concluído.");
-    appendLog("trainLog",`[TREINO] Modelo: ${JSON.stringify(model)}`);
-    $("trainingStats").textContent=`Modelo pronto. Limite inferior ${fmt(model.limite_inferior)}; superior ${fmt(model.limite_superior)}; erros ${model.erros}/${model.total_exemplos}.`;
-    $("trainNext").disabled=true;
-    $("inferStart").disabled=false;
-    renderExampleTable();
-  }
-}
-function trainAll(){
-  while(!trainingDone) trainOneStep();
-}
-function resetTraining(){
-  trainIndex=0;best=null;trainingDone=false;model=null;
-  $("trainingStep").innerHTML='<span class="stepnum">0</span>Pronto para iniciar. Clique em “Próximo passo”.';
-  $("trainingStats").textContent="Ainda não foram avaliados candidatos.";
-  $("trainLog").textContent="[TREINO] Aguardando início...";
-  $("trainNext").disabled=false;$("inferStart").disabled=false;
-  resetInference();updateRange(.33,.66);
-}
-function updateRange(lo,hi){
-  $("lowBar").style.width=(lo*100)+"%";
-  $("midBar").style.width=((hi-lo)*100)+"%";
-  $("highBar").style.width=((1-hi)*100)+"%";
-  $("lowerLabel").textContent=fmt(lo);$("upperLabel").textContent=fmt(hi);
-}
-function startInference(){
-  if(!model){$("inferResult").className="result bad";$("inferResult").textContent="Treine o modelo antes de iniciar a inferência.";return}
-  const x=Number($("measurement").value);
-  if($("measurement").value.trim()===""||!Number.isFinite(x)||x<0||x>1){
-    $("inferResult").className="result bad";$("inferResult").textContent="Informe um número válido entre 0 e 1.";return;
-  }
-  inferValue=x;inferIndex=0;
-  inferSteps=[
-    `[INFERÊNCIA 1/4] Recebendo nova medição: ${fmt(x)}.`,
-    `[INFERÊNCIA 2/4] Faixa considerada normal: ${fmt(model.limite_inferior)} até ${fmt(model.limite_superior)}.`,
-    x<model.limite_inferior
-      ? `[INFERÊNCIA 3/4] Comparação: ${fmt(x)} < ${fmt(model.limite_inferior)}. A medição está abaixo do limite inferior.`
-      : x>model.limite_superior
-      ? `[INFERÊNCIA 3/4] Comparação: ${fmt(x)} > ${fmt(model.limite_superior)}. A medição está acima do limite superior.`
-      : `[INFERÊNCIA 3/4] Comparação: valor dentro dos limites (inclusive).`,
-    classify(x,model.limite_inferior,model.limite_superior)===1
-      ? "[INFERÊNCIA 4/4] Resultado: ANOMALIA (classe 1) — sinal final: ALERTA."
-      : "[INFERÊNCIA 4/4] Resultado: NORMAL (classe 0) — sinal final: SEM ALERTA."
-  ];
-  $("inferLog").textContent="[INFERÊNCIA] Iniciando...";
-  $("inferStep").textContent="Pronto para mostrar o passo 1 de 4.";
-  $("inferResult").className="result";
-  $("inferResult").textContent="Inferência iniciada. Clique em “Próximo passo”.";
-  $("inferNext").disabled=false;
-  nextInferenceStep();
-}
-function nextInferenceStep(){
-  if(inferIndex>=inferSteps.length)return;
-  const line=inferSteps[inferIndex];
-  appendLog("inferLog",line);
-  $("inferStep").textContent=`Passo ${inferIndex+1} de ${inferSteps.length}: ${line.replace(/^\[INFERÊNCIA \d\/\d\] /,"")}`;
-  inferIndex++;
-  if(inferIndex===inferSteps.length){
-    const alert=classify(inferValue,model.limite_inferior,model.limite_superior)===1;
-    $("inferResult").className="result "+(alert?"bad":"ok");
-    $("inferResult").textContent=alert?"ANOMALIA (1) — ALERTA":"NORMAL (0) — SEM ALERTA";
-    $("inferNext").disabled=true;
-  }
-}
-function resetInference(){
-  inferSteps=[];inferIndex=0;inferValue=null;
-  $("inferLog").textContent="[INFERÊNCIA] Aguardando início...";
-  $("inferStep").textContent="Treine o modelo e inicie uma inferência para ver os detalhes.";
-  $("inferResult").className="result";$("inferResult").textContent="Aguardando uma medição.";
-  $("inferNext").disabled=true;
-}
-function renderExampleTable(){
-  $("exampleRows").innerHTML=testes.map(x=>{
-    const y=classify(x,model.limite_inferior,model.limite_superior);
-    return `<tr><td>${fmt(x)}</td><td>${y===1?"Fora da faixa":"Dentro da faixa"}</td><td class="${y?"alert":"normal"}"><strong>${y?"ALERTA":"SEM ALERTA"}</strong></td></tr>`;
-  }).join("");
-}
-function renderExampleButtons(){
-  $("exampleButtons").innerHTML=testes.map(x=>`<button class="secondary" data-value="${x}">${fmt(x)}</button>`).join("");
-  $("exampleButtons").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
-    $("measurement").value=btn.dataset.value;
-    $("inference").scrollIntoView({behavior:"smooth",block:"start"});
-    if(model)startInference();
-  }));
-}
-$("trainNext").addEventListener("click",trainOneStep);
-$("trainAll").addEventListener("click",trainAll);
-$("trainReset").addEventListener("click",resetTraining);
-$("inferStart").addEventListener("click",startInference);
-$("inferNext").addEventListener("click",nextInferenceStep);
-$("inferReset").addEventListener("click",resetInference);
-renderTrainingRows();renderExampleButtons();updateRange(.33,.66);
-$("exampleRows").innerHTML='<tr><td colspan="3">Execute o treinamento para exibir os resultados.</td></tr>';
-</script>
-
-<script>
 (function(){
-  const trainingData = [[0,1],[.10,1],[.20,1],[.32,1],[.33,0],[.40,0],[.50,0],[.60,0],[.66,0],[.67,1],[.80,1],[.90,1],[1,1]];
-  const $ = id => document.getElementById(id);
-  let seenTrainingStep = 0, seenInferenceValue = null, chartModel = null;
-  const colors = {red:"#c83245", green:"#14845b", blue:"#1769aa", ink:"#172b4d", muted:"#5c6f89", grid:"#d7e3f0", pale:"#eaf1f8"};
-  function ctxFor(id){
-    const c=$(id); if(!c) return null;
-    const ctx=c.getContext("2d"); if(!ctx) return null;
-    ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);
-    return {c,ctx};
-  }
-  function text(ctx,s,x,y,size=14,color=colors.ink,align="left"){
-    ctx.fillStyle=color;ctx.font=`${size}px system-ui, sans-serif`;ctx.textAlign=align;ctx.fillText(s,x,y);
-  }
-  function xPos(x,left,width){return left+x*width;}
-  function drawTraining(){
-    const o=ctxFor("trainingChart");if(!o)return;const {ctx}=o;
-    const left=48,right=22,top=42,bottom=55,w=760-left-right,h=300-top-bottom;
-    text(ctx,"Classe esperada por valor de entrada",left,22,15,colors.ink);
-    ctx.strokeStyle=colors.grid;ctx.lineWidth=1;
-    for(let i=0;i<=10;i++){const x=xPos(i/10,left,w);ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,top+h);ctx.stroke();text(ctx,(i/10).toFixed(1),x,top+h+22,11,colors.muted,"center");}
-    const lo=chartModel?chartModel.limite_inferior:null, hi=chartModel?chartModel.limite_superior:null;
-    if(lo!==null&&hi!==null){
-      ctx.fillStyle="#dff5e9";ctx.fillRect(xPos(lo,left,w),top,xPos(hi,left,w)-xPos(lo,left,w),h);
-      ctx.setLineDash([5,4]);ctx.strokeStyle=colors.green;
-      [lo,hi].forEach((v,i)=>{const x=xPos(v,left,w);ctx.beginPath();ctx.moveTo(x,top-5);ctx.lineTo(x,top+h);ctx.stroke();text(ctx,`${i===0?"Inferior":"Superior"} ${v.toFixed(2)}`,x,top-12,11,colors.green,"center")});ctx.setLineDash([]);
-    }
-    trainingData.forEach(([x,y],i)=>{
-      const px=xPos(x,left,w),py=y?top+42:top+h-40;
-      ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fillStyle=y?colors.red:colors.green;ctx.fill();
-      ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke();
-      text(ctx, x.toFixed(2), px, py+(y? -12:22),10,y?colors.red:colors.green,"center");
-    });
-    text(ctx,"ANOMALIA (1)",left,top+h+43,12,colors.red);
-    text(ctx,"NORMAL (0)",left+150,top+h+43,12,colors.green);
-    $("trainingChartCaption").textContent=chartModel
-      ? `Faixa encontrada: ${chartModel.limite_inferior.toFixed(2)}–${chartModel.limite_superior.toFixed(2)} · ${chartModel.erros} erro(s) em ${chartModel.total_exemplos} exemplos.`
-      : "Ainda sem faixa confirmada. Os pontos mostram os exemplos rotulados usados no treinamento.";
-  }
-  function drawComparison(){
-    const o=ctxFor("comparisonChart");if(!o)return;const {ctx}=o;
-    const left=48,top=35,w=920,h=220;
-    text(ctx,"Esperado × previsto (0 = normal, 1 = anomalia)",left,22,15);
-    if(!chartModel){
-      text(ctx,"Conclua o treinamento para calcular as previsões.",left,120,16,colors.muted);
-      $("comparisonCaption").textContent="Aguardando o treinamento.";
-      return;
-    }
-    const slot=w/trainingData.length;
-    trainingData.forEach(([x,y],i)=>{
-      const pred=(x<chartModel.limite_inferior||x>chartModel.limite_superior)?1:0;
-      const cx=left+i*slot+slot/2;
-      const yExpected=top+h-y*145, yPred=top+h-pred*145;
-      ctx.fillStyle=y?colors.red:colors.green;ctx.fillRect(cx-13,yExpected,11,top+h-yExpected);
-      ctx.fillStyle=pred? "#ed7d89":"#55bd8d";ctx.fillRect(cx+2,yPred,11,top+h-yPred);
-      text(ctx,x.toFixed(2),cx,top+h+20,10,colors.muted,"center");
-      if(y!==pred){ctx.strokeStyle=colors.red;ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,top+h-12,8,0,Math.PI*2);ctx.stroke();}
-    });
-    ctx.strokeStyle=colors.grid;ctx.beginPath();ctx.moveTo(left,top+h);ctx.lineTo(left+w,top+h);ctx.stroke();
-    $("comparisonCaption").textContent=`Erros de classificação nos exemplos exibidos: ${chartModel.erros} de ${chartModel.total_exemplos}. Barras fortes = classe esperada; barras claras = previsão.`;
-  }
-  function drawInference(){
-    const o=ctxFor("inferenceChart");if(!o)return;const {ctx}=o;
-    const left=48,right=28,y=110,w=760-left-right;
-    text(ctx,"Escala da medição (0 a 1)",left,28,15);
-    const lo=chartModel?chartModel.limite_inferior:.33,hi=chartModel?chartModel.limite_superior:.66;
-    ctx.fillStyle="#f6b8c0";ctx.fillRect(left,y,w*lo,32);
-    ctx.fillStyle="#8bd8b1";ctx.fillRect(left+w*lo,y,w*(hi-lo),32);
-    ctx.fillStyle="#f6b8c0";ctx.fillRect(left+w*hi,y,w*(1-hi),32);
-    ctx.strokeStyle="#fff";ctx.lineWidth=2;
-    [lo,hi].forEach(v=>{const x=left+w*v;ctx.beginPath();ctx.moveTo(x,y-14);ctx.lineTo(x,y+48);ctx.stroke();text(ctx,v.toFixed(2),x,y+68,12,colors.ink,"center")});
-    for(let i=0;i<=10;i++){const x=left+w*i/10;text(ctx,(i/10).toFixed(1),x,y+92,10,colors.muted,"center");}
-    if(seenInferenceValue!==null){
-      const x=left+w*seenInferenceValue,alert=seenInferenceValue<lo||seenInferenceValue>hi;
-      ctx.beginPath();ctx.moveTo(x,y-24);ctx.lineTo(x,y+45);ctx.strokeStyle=alert?colors.red:colors.blue;ctx.lineWidth=4;ctx.stroke();
-      ctx.beginPath();ctx.arc(x,y-25,8,0,Math.PI*2);ctx.fillStyle=alert?colors.red:colors.blue;ctx.fill();
-      text(ctx,`Medição ${seenInferenceValue.toFixed(2)}`,Math.max(left+5,Math.min(left+w-5,x)),y-42,13,alert?colors.red:colors.blue,"center");
-      $("inferenceChartCaption").textContent=alert?`A medição ${seenInferenceValue.toFixed(2)} está fora da faixa normal: ALERTA.`:`A medição ${seenInferenceValue.toFixed(2)} está dentro da faixa normal: SEM ALERTA.`;
-    }else{
-      text(ctx,"Aguardando medição",left+w/2,y-18,13,colors.muted,"center");
-      $("inferenceChartCaption").textContent="Informe uma medição e inicie a inferência para ver o marcador.";
-    }
-  }
-  function refresh(){
-    const t=$("trainingStep")?.textContent||"";
-    if(t.includes("Finalizando o treinamento")||t.includes("Treinamento concluído")||t.includes("Treinamento já concluído")){
-      chartModel={limite_inferior:.33,limite_superior:.66,erros:0,total_exemplos:13};
-    } else {
-      const m=t.match(/Limite inferior\s+([\d,\.]+).*Limite superior\s+([\d,\.]+)/s);
-      if(m)chartModel={limite_inferior:parseFloat(m[1].replace(",",".")),limite_superior:parseFloat(m[2].replace(",." ,".")),erros:0,total_exemplos:13};
-    }
-    const log=$("trainLog")?.textContent||"";
-    if(log.includes("limite_inferior")&&log.includes("limite_superior"))chartModel={limite_inferior:.33,limite_superior:.66,erros:0,total_exemplos:13};
-    const inferLog=$("inferLog")?.textContent||"";
-    const match=inferLog.match(/Recebendo nova medição: ([\d,\.]+)/);
-    if(match)seenInferenceValue=parseFloat(match[1].replace(",","."));
-    if(inferLog.includes("Aguardando início")||inferLog.includes("Aguardando início..."))seenInferenceValue=null;
-    drawTraining();drawComparison();drawInference();
-  }
-  // Os listeners são registrados depois dos listeners principais, para redesenhar
-  // os gráficos após cada ação do simulador.
-  ["trainNext","trainAll","trainReset","inferStart","inferNext","inferReset"].forEach(id=>{
-    $(id)?.addEventListener("click",()=>setTimeout(refresh,0));
-  });
-  $("measurement")?.addEventListener("input",()=>{seenInferenceValue=Number($("measurement").value);drawInference()});
-  drawTraining();drawComparison();drawInference();
+const $=id=>document.getElementById(id);
+const fm=(v,n=2)=>Number(v).toFixed(n).replace('.',',');
+const sg=z=>1/(1+Math.exp(-z));
+const cls=(x,lo,hi)=>(x<lo||x>hi)?1:0;
+const K={red:'#c83245',green:'#14845b',blue:'#1769aa',ink:'#172b4d',muted:'#5c6f89',grid:'#d7e3f0',amber:'#e4a11b'};
+const cvs=(id,w,h)=>{const c=$(id),d=Math.min(2,window.devicePixelRatio||1);if(c.width!==Math.round(w*d)){c.width=Math.round(w*d);c.height=Math.round(h*d)}const g=c.getContext('2d');g.setTransform(d,0,0,d,0,0);g.fillStyle='#fff';g.fillRect(0,0,w,h);return g};
+const txt=(g,s,x,y,o={})=>{g.font=`${o.b?'700 ':''}${o.s||12}px system-ui,sans-serif`;g.fillStyle=o.c||K.ink;g.textAlign=o.a||'left';g.fillText(s,x,y)};
+const ptr=(e,c,w,h)=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*w/r.width,(e.clientY-r.top)*h/r.height]};
+const dotsHTML=(titles,cur)=>titles.map((t,i)=>`<button class="sdot ${i===cur?'on':i<cur?'done':''}" data-i="${i}" style="padding:6px 12px 6px 6px"><b>${i+1}</b>${t}</button>`).join('');
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ==================== DADOS E FORÇA BRUTA (fiel ao Elixir) ==================== */
+const EX=[[0,1],[.1,1],[.2,1],[.32,1],[.33,0],[.4,0],[.5,0],[.6,0],[.66,0],[.67,1],[.8,1],[.9,1],[1,1]];
+const TESTS=[.15,.32,.33,.45,.66,.67,.85];
+const CAND=[],IMP=[];let bestE=Infinity,bestI=-1;
+for(let i=0;i<=100;i++)for(let j=i;j<=100;j++){
+  const lo=i*0.01,hi=j*0.01;let e=0;for(const[x,y]of EX)if(cls(x,lo,hi)!==y)e++;
+  const k=CAND.length;let imp=false;if(e<bestE){bestE=e;bestI=k;imp=true;IMP.push(k)}
+  CAND.push({i,j,lo,hi,e,b:bestI,imp})}
+const NC=CAND.length,BEST=CAND[bestI],TIES=CAND.filter(c=>c.e===bestE).length,M=BEST;
+const offs=i=>i*101-i*(i-1)/2, idxOf=(i,j)=>offs(i)+(j-i);
+$('mdlTxt').textContent=`inferior ${fm(M.lo)}, superior ${fm(M.hi)}`;
+$('candSlider').max=NC-1;
+
+/* ==================== 2. TREINAMENTO ==================== */
+const TR={stage:1,k:0,timer:null};
+const STG=[
+ {n:'Carregar exemplos',code:'@dados_treinamento [\n  {0.00, 1}, {0.10, 1}, {0.20, 1}, {0.32, 1},\n  {0.33, 0}, {0.40, 0}, {0.50, 0}, {0.60, 0}, {0.66, 0},\n  {0.67, 1}, {0.80, 1}, {0.90, 1}, {1.00, 1}\n]'},
+ {n:'Gerar candidatos',code:'candidatos =\n  for inferior <- 0..100,\n      superior <- inferior..100 do\n    {inferior * @passo, superior * @passo}\n  end'},
+ {n:'Avaliar cada par',code:'erros_atual =\n  Enum.count(@dados_treinamento, fn {x, esperado} ->\n    inferir_com_limites(x, inf, sup) != esperado\n  end)'},
+ {n:'Melhor faixa',code:'cond do\n  is_nil(melhor_erro)      -> {erros_atual, inf, sup, qtd + 1}\n  erros_atual < melhor_erro -> {erros_atual, inf, sup, qtd + 1}\n  true                      -> {melhor_erro, melhor_inf, melhor_sup, qtd + 1}\nend'},
+ {n:'Modelo pronto',code:'modelo = %{\n  limite_inferior: inferior,\n  limite_superior: superior,\n  erros: erros,\n  total_exemplos: length(@dados_treinamento)\n}'}];
+const trCand=()=>TR.stage===3?CAND[TR.k]:TR.stage>=4?BEST:null;
+function stageText(){
+  const s=TR.stage,c=CAND[TR.k];
+  if(s===1)return `<p>O script começa com <b>13 exemplos rotulados</b> no formato <span class="mono">{valor, classe}</span>: classe 0 = normal, classe 1 = anomalia.</p><p>No gráfico, os pontos da faixa superior são anomalias e os da inferior são normais. Repare que os normais ficam <b>agrupados no meio</b>: um único corte não separa as classes, por isso o modelo precisa de <b>dois limites</b>.</p>`;
+  if(s===2)return `<p>Para cada limite inferior de 0,00 a 1,00 (passo 0,01) o script testa todos os limites superiores de “inferior” até 1,00 — as combinações com superior &lt; inferior não fazem sentido.</p><div class="math">101 + 100 + 99 + … + 1 = 101 × 102 / 2 = <b>${NC}</b> pares</div><p>O mapa à direita mostra todas as combinações: cada ponto é um candidato, ainda não avaliado.</p>`;
+  if(s===3)return `<p>Cada candidato é aplicado aos 13 exemplos. Cada previsão diferente da classe esperada conta <b>1 erro</b>. O candidato guarda-se como “melhor” só se tiver <b>menos erros</b> que o melhor anterior.</p><p>Os candidatos são varridos por limite inferior crescente (colunas do mapa, da esquerda para a direita). Use os controles abaixo ou clique no mapa.</p>`;
+  if(s===4)return `<p>Depois de avaliar os ${NC} pares, o menor número de erros é <b>${BEST.e}</b>, encontrado no candidato <b>#${bestI+1}</b>.</p><div class="math">Limite inferior: ${fm(BEST.lo)}\nLimite superior: ${fm(BEST.hi)}\nErros nos exemplos: ${BEST.e} de ${EX.length}</div><p class="note">Candidatos com esse mesmo número de erros: ${TIES}. Em empate, o primeiro encontrado vence (o <span class="mono">cond</span> exige <span class="mono">&lt;</span> estrito).</p>`;
+  return `<p>O treinamento termina guardando só <b>dois limites</b> (mais contadores). Não há pesos: “treinar” aqui significa <em>pesquisar</em>.</p><div class="math">%{erros: ${BEST.e}, limite_inferior: ${fm(BEST.lo)}, limite_superior: ${fm(BEST.hi)}, total_exemplos: ${EX.length}}</div><p>Pronto para a inferência: veja a seção 3.</p>`}
+function trLog(){
+  const L=[],s=TR.stage;
+  if(s>=1)L.push('[TREINO 1/5] Carregando exemplos supervisionados...','Cada exemplo contém {valor, classe_esperada}.','Classe 0 = normal | Classe 1 = anomalia','');
+  if(s>=2)L.push('[TREINO 2/5] Gerando combinações de limites candidatos...',`[TREINO] Quantidade de pares de limites testados: ${NC}`);
+  if(s>=3){L.push('[TREINO 3/5] Avaliando cada par e contando classificações incorretas...');const last=s===3?TR.k:NC-1;
+    for(const i of IMP){if(i>last)break;const c=CAND[i];L.push(`  candidato #${i+1} (${fm(c.lo)} ; ${fm(c.hi)}) → ${c.e} erro(s) ← novo melhor`)}
+    L.push(s===3?`  ... avaliados até agora: ${TR.k+1} de ${NC}`:`[TREINO] Pares avaliados: ${NC}`)}
+  if(s>=4)L.push('[TREINO 4/5] Melhor faixa encontrada:',`  Limite inferior: ${fm(BEST.lo)}`,`  Limite superior: ${fm(BEST.hi)}`,`  Erros nos exemplos de treinamento: ${BEST.e} de ${EX.length}`);
+  if(s>=5)L.push('[TREINO 5/5] Treinamento concluído. Modelo preparado para inferência.',`  Parâmetros: %{erros: ${BEST.e}, limite_inferior: ${fm(BEST.lo)}, limite_superior: ${fm(BEST.hi)}, total_exemplos: ${EX.length}}`);
+  return L.join('\n')}
+function drawTrain(){
+  const W=900,H=330,g=cvs('trChart',W,H),L=40,R=24,T0=36,B=H-56,pw=W-L-R,X=v=>L+v*pw,c=trCand();
+  if(c){g.fillStyle='rgba(200,50,69,.12)';g.fillRect(X(0),T0,X(c.lo)-X(0),B-T0);g.fillRect(X(c.hi),T0,X(1)-X(c.hi),B-T0);
+    g.fillStyle='rgba(20,132,91,.18)';g.fillRect(X(c.lo),T0,Math.max(2,X(c.hi)-X(c.lo)),B-T0)}
+  g.strokeStyle=K.grid;g.lineWidth=1;
+  for(let i=0;i<=10;i++){const x=X(i/10);g.beginPath();g.moveTo(x,T0);g.lineTo(x,B);g.stroke();txt(g,fm(i/10,1),x,B+18,{s:11,c:K.muted,a:'center'})}
+  g.strokeStyle='#9db2c8';g.beginPath();g.moveTo(L,B);g.lineTo(L+pw,B);g.stroke();
+  txt(g,'ANOMALIA esperada (classe 1)',L+6,T0+16,{s:11,c:K.red,b:1});txt(g,'NORMAL esperado (classe 0)',L+6,B-8,{s:11,c:K.green,b:1});
+  txt(g,'medição →',L+pw,B+38,{s:11,c:K.muted,a:'right'});
+  if(TR.stage===3){const bb=CAND[c.b];if(c.b!==TR.k){g.setLineDash([6,4]);g.strokeStyle=K.blue;g.lineWidth=2;g.strokeRect(X(bb.lo),T0+3,Math.max(2,X(bb.hi)-X(bb.lo)),B-T0-6);g.setLineDash([])}}
+  if(c){g.setLineDash([5,4]);g.strokeStyle=K.green;g.lineWidth=2;[c.lo,c.hi].forEach(v=>{g.beginPath();g.moveTo(X(v),T0-8);g.lineTo(X(v),B);g.stroke()});g.setLineDash([]);
+    txt(g,`inferior ${fm(c.lo)}`,X(c.lo)-4,T0-12,{s:11,c:K.green,b:1,a:'right'});txt(g,`superior ${fm(c.hi)}`,X(c.hi)+4,T0-12,{s:11,c:K.green,b:1})}
+  EX.forEach(([x,y])=>{const px=X(x),py=y?T0+58:B-52;
+    if(c&&cls(x,c.lo,c.hi)!==y){g.strokeStyle=K.red;g.lineWidth=3;g.beginPath();g.arc(px,py,13,0,7);g.stroke();txt(g,'✗',px,py+(y?32:-20),{s:15,c:K.red,b:1,a:'center'})}
+    g.beginPath();g.arc(px,py,7,0,7);g.fillStyle=y?K.red:K.green;g.fill();g.strokeStyle='#fff';g.lineWidth=2;g.stroke();
+    txt(g,fm(x),px,py+(y?-14:24),{s:10,c:y?K.red:K.green,a:'center'})})}
+function heatColor(e){return e===0?'#14845b':`hsl(210,65%,${28+62*(e/EX.length)}%)`}
+function drawHeat(){
+  const W=560,H=552,g=cvs('heat',W,H),L=44,T0=14,S=5,pw=101*S,B=T0+pw;
+  const ev=TR.stage<3?-1:TR.stage===3?TR.k:NC-1;
+  for(let k=0;k<NC;k++){const c=CAND[k];g.fillStyle=k<=ev?heatColor(c.e):'#e8eef5';g.fillRect(L+c.i*S,T0+(100-c.j)*S,S,S)}
+  g.strokeStyle='#7f93a9';g.lineWidth=1;g.strokeRect(L+.5,T0+.5,pw,pw);
+  [0,.2,.4,.6,.8,1].forEach(v=>{txt(g,fm(v,1),L+v*100*S,B+16,{s:11,c:K.muted,a:'center'});txt(g,fm(v,1),L-6,B-v*100*S+4,{s:11,c:K.muted,a:'right'})});
+  txt(g,'limite inferior →',L+pw/2,H-4,{s:12,a:'center',b:1});g.save();g.translate(11,T0+pw/2);g.rotate(-Math.PI/2);txt(g,'limite superior →',0,0,{s:12,a:'center',b:1});g.restore();
+  txt(g,'superior < inferior:',L+pw-8,B-40,{s:11,c:K.muted,a:'right'});txt(g,'combinação inválida',L+pw-8,B-26,{s:11,c:K.muted,a:'right'});
+  if(ev>=0){const c=CAND[ev],b=CAND[c.b],cx=v=>L+v*100*S+S/2,cy=v=>T0+(100-v*100)*S+S/2;
+    if(TR.stage===3){g.strokeStyle='#172b4d';g.lineWidth=1;g.setLineDash([3,3]);g.beginPath();g.moveTo(cx(c.lo),B);g.lineTo(cx(c.lo),cy(c.hi));g.lineTo(L,cy(c.hi));g.stroke();g.setLineDash([]);
+      g.beginPath();g.arc(cx(c.lo),cy(c.hi),6,0,7);g.fillStyle='#fff';g.fill();g.lineWidth=2;g.stroke()}
+    g.strokeStyle=K.amber;g.lineWidth=3;g.beginPath();g.arc(cx(b.lo),cy(b.hi),9,0,7);g.stroke()}}
+function renderTrain(){
+  const s=TR.stage,c=CAND[TR.k];
+  $('trDots').innerHTML=dotsHTML(STG.map(t=>t.n),s-1);
+  $('trPrev').disabled=s===1;$('trNext').disabled=s===5;
+  $('stCard').innerHTML=`<h3><span class="pill">Etapa ${s}/5</span>${STG[s-1].n}</h3>${stageText()}<pre class="code"></pre>`;
+  $('stCard').querySelector('pre').textContent=STG[s-1].code;
+  $('evalBox').style.display=s===3?'block':'none';
+  if(s===3){const b=CAND[c.b];
+    $('candInfo').innerHTML=`Candidato #${TR.k+1} de ${NC}: inferior <b>${fm(c.lo)}</b> · superior <b>${fm(c.hi)}</b> → <b class="${c.e?'alert':'normal'}">${c.e} erro(s)</b>\n${c.imp?'<span class="pill ok">★ novo melhor!</span>':`Melhor até agora: #${c.b+1} (${fm(b.lo)} a ${fm(b.hi)}) com ${b.e} erro(s)`}`;
+    $('candNum').textContent=`${TR.k+1} / ${NC}`;$('candSlider').value=TR.k;
+    $('cPI').disabled=!IMP.some(i=>i<TR.k);$('cNI').disabled=!IMP.some(i=>i>TR.k);
+    ['cFirst','cPrev'].forEach(i=>$(i).disabled=TR.k===0);['cNext','cTen','cLast'].forEach(i=>$(i).disabled=TR.k===NC-1)}
+  const cc=trCand();
+  $('trRows').innerHTML=EX.map(([x,y])=>{if(!cc)return `<tr><td>${fm(x)}</td><td class="${y?'alert':'normal'}"><b>${y} — ${y?'anomalia':'normal'}</b></td><td>—</td><td>—</td><td></td></tr>`;
+    const p=cls(x,cc.lo,cc.hi),cmp=x<cc.lo?`${fm(x)} < ${fm(cc.lo)}`:x>cc.hi?`${fm(x)} > ${fm(cc.hi)}`:'dentro dos limites';
+    return `<tr class="${p!==y?'bad':''}"><td>${fm(x)}</td><td class="${y?'alert':'normal'}">${y}</td><td>${cmp}</td><td class="${p?'alert':'normal'}"><b>${p}</b></td><td class="${p===y?'good':'bad'}"><b>${p===y?'✓':'✗'}</b></td></tr>`}).join('');
+  drawTrain();drawHeat();
+  const lg=$('trLog');lg.textContent=trLog();lg.scrollTop=1e9}
+function trStop(){clearInterval(TR.timer);TR.timer=null;$('cPlay').textContent='▶ Reproduzir'}
+function trGo(st){trStop();TR.stage=clamp(st,1,5);if(TR.stage>=4)TR.k=NC-1;else if(TR.stage===3&&TR.k===NC-1)TR.k=0;renderTrain()}
+function trK(k){trStop();TR.stage=3;TR.k=clamp(k,0,NC-1);renderTrain()}
+$('trDots').onclick=e=>{const b=e.target.closest('[data-i]');if(b)trGo(+b.dataset.i+1)};
+$('trNext').onclick=()=>trGo(TR.stage+1);$('trPrev').onclick=()=>trGo(TR.stage-1);
+$('trAll').onclick=()=>trGo(5);$('trReset').onclick=()=>{TR.k=0;trGo(1)};
+$('candSlider').oninput=e=>trK(+e.target.value);
+$('cFirst').onclick=()=>trK(0);$('cPrev').onclick=()=>trK(TR.k-1);$('cNext').onclick=()=>trK(TR.k+1);$('cTen').onclick=()=>trK(TR.k+10);$('cLast').onclick=()=>trK(NC-1);
+$('cNI').onclick=()=>{const n=IMP.find(i=>i>TR.k);if(n!==undefined)trK(n)};
+$('cPI').onclick=()=>{const p=[...IMP].reverse().find(i=>i<TR.k);if(p!==undefined)trK(p)};
+$('cPlay').onclick=()=>{if(TR.timer)return trStop();if(TR.k>=NC-1)TR.k=0;$('cPlay').textContent='⏸ Pausar';
+  TR.timer=setInterval(()=>{TR.k=Math.min(NC-1,TR.k+(+$('cSpeed').value));renderTrain();if(TR.k>=NC-1)trStop()},70)};
+const heatCell=e=>{const[px,py]=ptr(e,$('heat'),560,552),i=Math.round((px-44)/5-.5),j=Math.round(100-((py-14)/5-.5));return(i>=0&&i<=100&&j>=i&&j<=100)?[i,j]:null};
+$('heat').onpointermove=e=>{const h=heatCell(e);if(!h){$('heatCap').textContent='Eixo horizontal = limite inferior; vertical = limite superior. Clique num ponto para avaliar aquele candidato. Anel amarelo = melhor até agora.';return}
+  const k=idxOf(h[0],h[1]),c=CAND[k];$('heatCap').textContent=`Candidato #${k+1}: inferior ${fm(c.lo)} · superior ${fm(c.hi)} → ${c.e} erro(s). Clique para avaliá-lo.`};
+$('heat').onclick=e=>{const h=heatCell(e);if(h)trK(idxOf(h[0],h[1]))};
+
+/* ==================== 3. INFERÊNCIA ==================== */
+const IN={x:.45,s:0,timer:null};
+function iSteps(){
+  const x=IN.x,{lo,hi}=M,below=x<lo,above=!below&&x>hi,alert=below||above;
+  const st=[
+   {k:'in',t:'Receber a medição',h:`<p>Chega uma nova medição: <b>${fm(x)}</b>.</p><p class="note">Ela aparece no gráfico como o marcador azul.</p>`,l:[`[INFERÊNCIA] Recebendo nova medição: ${fm(x)}`]},
+   {k:'band',t:'Consultar a faixa normal',h:`<p>O modelo treinado guarda a faixa considerada normal.</p><div class="math">inferior = ${fm(lo)}   superior = ${fm(hi)}</div><p class="note">Os limites também são normais.</p>`,l:[`[INFERÊNCIA] Faixa considerada normal: ${fm(lo)} até ${fm(hi)}`]},
+   {k:'lo',t:'Comparar com o limite inferior',h:`<div class="math">${fm(x)} &lt; ${fm(lo)} ?  →  <b>${below?'SIM':'NÃO'}</b></div><p>${below?'Está abaixo do limite inferior: o <span class="mono">cond</span> para aqui e não compara com o superior.':'Não está abaixo. O <span class="mono">cond</span> passa para a próxima condição.'}</p>`,l:below?[`[INFERÊNCIA] Comparação: ${fm(x)} < ${fm(lo)}`]:[`  (${fm(x)} < ${fm(lo)}? não — segue para a próxima condição)`]}];
+  if(!below)st.push({k:'hi',t:'Comparar com o limite superior',h:`<div class="math">${fm(x)} &gt; ${fm(hi)} ?  →  <b>${above?'SIM':'NÃO'}</b></div><p>${above?'Está acima do limite superior.':'Também não está acima: a medição está dentro da faixa.'}</p>`,l:above?[`[INFERÊNCIA] Comparação: ${fm(x)} > ${fm(hi)}`]:['[INFERÊNCIA] Comparação: valor dentro dos limites.']});
+  st.push({k:'res',t:'Resultado e sinal final',h:`<div class="math">classe = ${alert?1:0}  →  ${alert?'ANOMALIA':'NORMAL'}</div><p>${alert?(below?'Abaixo do limite inferior.':'Acima do limite superior.'):'Dentro da faixa normal.'} Sinal final: <b class="${alert?'alert':'normal'}">${alert?'ALERTA':'SEM ALERTA'}</b>.</p>`,
+    l:[alert?`[INFERÊNCIA] Resultado: ANOMALIA (classe 1) — ${below?'abaixo do limite inferior':'acima do limite superior'}.`:'[INFERÊNCIA] Resultado: NORMAL (classe 0).',`[INFERÊNCIA] Sinal final: ${alert?'ALERTA':'SEM ALERTA'}`]});
+  return st}
+function drawInfer(st,cur){
+  const W=900,H=280,g=cvs('inChart',W,H),L=40,R=24,pw=W-L-R,X=v=>L+v*pw,Y0=104,BH=40,{lo,hi}=M,x=IN.x,key=cur.k,idx=st.indexOf(cur);
+  const showBand=idx>=1,below=x<lo,above=x>hi,alert=below||above,fin=key==='res';
+  if(showBand){g.fillStyle='#f6b8c0';g.fillRect(X(0),Y0,X(lo)-X(0),BH);g.fillRect(X(hi),Y0,X(1)-X(hi),BH);g.fillStyle='#8bd8b1';g.fillRect(X(lo),Y0,X(hi)-X(lo),BH);
+    txt(g,'abaixo → ALERTA',(X(0)+X(lo))/2,Y0+BH/2+4,{s:11,c:'#8a1f2d',a:'center',b:1});txt(g,'faixa normal',(X(lo)+X(hi))/2,Y0+BH/2+4,{s:12,c:'#0e5b3f',a:'center',b:1});txt(g,'acima → ALERTA',(X(hi)+X(1))/2,Y0+BH/2+4,{s:11,c:'#8a1f2d',a:'center',b:1});
+    g.strokeStyle='#fff';g.lineWidth=2;[lo,hi].forEach(v=>{g.beginPath();g.moveTo(X(v),Y0-12);g.lineTo(X(v),Y0+BH+12);g.stroke()});
+    txt(g,fm(lo),X(lo),Y0+BH+30,{s:12,b:1,a:'center'});txt(g,fm(hi),X(hi),Y0+BH+30,{s:12,b:1,a:'center'})}
+  else{g.fillStyle='#e8eef5';g.fillRect(X(0),Y0,X(1)-X(0),BH);txt(g,'faixa ainda desconhecida',W/2,Y0+BH/2+4,{s:12,c:K.muted,a:'center'})}
+  for(let i=0;i<=10;i++)txt(g,fm(i/10,1),X(i/10),Y0+BH+(showBand&&(Math.abs(i/10-lo)<.05||Math.abs(i/10-hi)<.05)?52:30),{s:10,c:K.muted,a:'center'});
+  EX.forEach(([v,y])=>{g.globalAlpha=.55;g.beginPath();g.arc(X(v),Y0-24,4,0,7);g.fillStyle=y?K.red:K.green;g.fill();g.globalAlpha=1});
+  const hot=key==='lo'?lo:key==='hi'?hi:null;
+  if(hot!==null){const y=Y0+BH+78,a=X(x),b=X(hot);g.strokeStyle=K.amber;g.lineWidth=5;g.beginPath();g.moveTo(X(hot),Y0-14);g.lineTo(X(hot),Y0+BH+14);g.stroke();
+    g.lineWidth=2.5;g.beginPath();g.moveTo(a,y);g.lineTo(b,y);g.moveTo(a,y-8);g.lineTo(a,y+8);g.moveTo(b,y-8);g.lineTo(b,y+8);g.stroke();
+    const yes=key==='lo'?below:above;txt(g,key==='lo'?`${fm(x)} < ${fm(lo)} ?  ${yes?'SIM':'NÃO'}`:`${fm(x)} > ${fm(hi)} ?  ${yes?'SIM':'NÃO'}`,(a+b)/2,y+22,{s:13,b:1,c:yes?K.red:K.green,a:'center'})}
+  const col=fin?(alert?K.red:K.green):K.blue;
+  g.strokeStyle=col;g.lineWidth=4;g.beginPath();g.moveTo(X(x),38);g.lineTo(X(x),Y0+BH+12);g.stroke();g.beginPath();g.arc(X(x),38,9,0,7);g.fillStyle=col;g.fill();
+  txt(g,`Medição ${fm(x)}`,clamp(X(x),L+40,L+pw-40),20,{s:14,b:1,c:col,a:'center'});
+  if(fin)txt(g,alert?'ANOMALIA (1) — ALERTA':'NORMAL (0) — SEM ALERTA',W-R,H-10,{s:15,b:1,c:col,a:'right'})}
+function renderInfer(){
+  const st=iSteps();IN.s=clamp(IN.s,0,st.length-1);const cur=st[IN.s],x=IN.x;
+  if(document.activeElement!==$('inX'))$('inX').value=x;$('inR').value=x;$('inRL').textContent=fm(x);
+  $('inChips').innerHTML=TESTS.map(v=>`<button class="${v===x?'':'sec'}" data-v="${v}">${fm(v)}</button>`).join('');
+  const names=[['in','Medição'],['band','Faixa'],['lo','x < inferior?'],['hi','x > superior?'],['res','Sinal']];
+  $('inFlow').innerHTML=names.map(([k,n],i)=>{const si=st.findIndex(s=>s.k===k);const c=si<0?'skip':si===IN.s?'on':si<IN.s?'done':'';return `<span class="fb ${c}">${n}</span>${i<names.length-1?'<span class="fa">→</span>':''}`}).join('');
+  $('inCard').innerHTML=`<h3><span class="pill">Etapa ${IN.s+1}/${st.length}</span>${cur.t}</h3>${cur.h}`;
+  $('inFirst').disabled=$('inPrev').disabled=IN.s===0;$('inNext').disabled=$('inEnd').disabled=IN.s===st.length-1;
+  const fin=cur.k==='res',alert=cls(x,M.lo,M.hi)===1,r=$('inRes');
+  r.className='result '+(fin?(alert?'bad':'ok'):'idle');r.textContent=fin?(alert?'ANOMALIA (1) — ALERTA':'NORMAL (0) — SEM ALERTA'):'Avance até a última etapa para ver o sinal.';
+  const lg=$('inLog');lg.textContent=st.slice(0,IN.s+1).flatMap(s=>s.l).join('\n');lg.scrollTop=1e9;
+  $('inRows').innerHTML=TESTS.map(v=>{const p=cls(v,M.lo,M.hi),cmp=v<M.lo?`${fm(v)} < ${fm(M.lo)}`:v>M.hi?`${fm(v)} > ${fm(M.hi)}`:'dentro dos limites';return `<tr class="clk ${v===x?'sel':''}" data-v="${v}"><td>${fm(v)}</td><td>${cmp}</td><td>${p}</td><td class="${p?'alert':'normal'}"><b>${p?'ALERTA':'SEM ALERTA'}</b></td></tr>`}).join('');
+  drawInfer(st,cur)}
+function iStop(){clearInterval(IN.timer);IN.timer=null;$('inPlay').textContent='▶ Reproduzir'}
+function setX(v){iStop();IN.x=clamp(Math.round(v*100)/100,0,1);IN.s=0;renderInfer()}
+$('inX').oninput=e=>{const v=parseFloat(e.target.value);if(Number.isFinite(v))setX(v)};
+$('inR').oninput=e=>setX(+e.target.value);
+$('inChips').onclick=e=>{const b=e.target.closest('[data-v]');if(b)setX(+b.dataset.v)};
+$('inRows').onclick=e=>{const r=e.target.closest('[data-v]');if(r){setX(+r.dataset.v);$('infer').scrollIntoView({behavior:'smooth'})}};
+$('inNext').onclick=()=>{iStop();IN.s++;renderInfer()};$('inPrev').onclick=()=>{iStop();IN.s--;renderInfer()};
+$('inFirst').onclick=()=>{iStop();IN.s=0;renderInfer()};$('inEnd').onclick=()=>{iStop();IN.s=99;renderInfer()};
+$('inPlay').onclick=()=>{if(IN.timer)return iStop();if(IN.s>=iSteps().length-1)IN.s=0;$('inPlay').textContent='⏸ Pausar';renderInfer();
+  IN.timer=setInterval(()=>{if(IN.s>=iSteps().length-1){iStop();return}IN.s++;renderInfer();if(IN.s>=iSteps().length-1)iStop()},1500)};
+const inCv=$('inChart');let inDrag=false;const inPick=e=>{const[px]=ptr(e,inCv,900,280);setX((px-40)/836)};
+inCv.onpointerdown=e=>{inDrag=true;inCv.setPointerCapture(e.pointerId);inPick(e)};inCv.onpointermove=e=>{if(inDrag)inPick(e)};inCv.onpointerup=()=>inDrag=false;
+
+/* ==================== 4. NEURÔNIO ==================== */
+const ND={D:EX.map(a=>a.slice()),C:.495,m:null,H:[],x:.45,ts:0,is:0,timer:null,sel:null};
+const nF=v=>Math.abs(v-ND.C)*10;
+function nGrads(w,b){let gw=0,gb=0,L=0,hit=0;for(const[v,y]of ND.D){const f=nF(v),p=sg(w*f+b);L-=y*Math.log(p+1e-9)+(1-y)*Math.log(1-p+1e-9);gw+=(p-y)*f;gb+=p-y;if((p>=.5?1:0)===y)hit++}const n=ND.D.length||1;return{gw:gw/n,gb:gb/n,L:L/n,hit}}
+function nStep(m,g,lr,opt){
+  if(opt==='adam'){const k=m.k+1,mw=.9*m.mw+.1*g.gw,mb=.9*m.mb+.1*g.gb,vw=.999*m.vw+.001*g.gw*g.gw,vb=.999*m.vb+.001*g.gb*g.gb;
+    return{dw:lr*(mw/(1-.9**k))/(Math.sqrt(vw/(1-.999**k))+1e-8),db:lr*(mb/(1-.9**k))/(Math.sqrt(vb/(1-.999**k))+1e-8),mw,mb,vw,vb,k}}
+  return{dw:lr*g.gw,db:lr*g.gb,mw:m.mw,mb:m.mb,vw:m.vw,vb:m.vb,k:m.k}}
+const nLr=()=>+$('nlLr').value||.05;
+function nApply(g){const m=ND.m,s=nStep(m,g,nLr(),$('nlOpt').value);ND.H.push({L:g.L,a:g.hit/(ND.D.length||1)});
+  Object.assign(m,{w:m.w-s.dw,b:m.b-s.db,mw:s.mw,mb:s.mb,vw:s.vw,vb:s.vb,k:s.k,t:m.t+1})}
+function nlog(t){const l=$('nlLog');l.textContent+='\n'+t;l.scrollTop=1e9}
+function nRun(n){for(let i=0;i<n;i++){const g=nGrads(ND.m.w,ND.m.b);
+  if($('nlStop').checked&&g.hit===ND.D.length){nlog(`[ÉPOCA ${ND.m.t}] 0 erros — treinamento interrompido.`);nStop();return false}
+  nApply(g);const t=ND.m.t;if(t<=3||t%100===0)nlog(`[ÉPOCA ${t}] erro=${fm(g.L,3)} acertos=${g.hit}/${ND.D.length} ∂L/∂w=${fm(g.gw,3)} ∂L/∂b=${fm(g.gb,3)}`);
+  if(ND.m.t>=20000){nlog('[TREINO] Limite de 20000 épocas.');nStop();return false}}return true}
+function nStop(){clearInterval(ND.timer);ND.timer=null;$('nlPlay').textContent='▶ Treinar (animado)'}
+function nReset(w=.1,b=0,msg=true){nStop();ND.m={w,b,t:0,mw:0,mb:0,vw:0,vb:0,k:0};ND.H=[];ND.ts=0;if(msg)$('nlLog').textContent=`[TREINO] Pesos iniciais: w=${fm(w)} b=${fm(b)} · ${ND.D.length} exemplos · centro ${fm(ND.C,3)}.`;nAll()}
+const rows=()=>ND.D.map(([v,y])=>{const f=nF(v),z=ND.m.w*f+ND.m.b,p=sg(z);return{x:v,y,f,z,p,pr:p>=.5?1:0,loss:-(y*Math.log(p+1e-9)+(1-y)*Math.log(1-p+1e-9)),gW:(p-y)*f,gB:p-y}}).sort((a,b)=>a.x-b.x);
+const NT=['Propagação','Erro','Gradientes','Atualização'];
+function nTrainCard(){
+  const m=ND.m,r=rows(),n=r.length||1,g=nGrads(m.w,m.b),s=nStep(m,g,nLr(),$('nlOpt').value),E=m.t+1,i=ND.ts;
+  $('nlDots').innerHTML=dotsHTML(NT,i);$('nlPrev').disabled=i===0;$('nlNext').disabled=i===3;
+  let h='';
+  if(i===0)h=`<p>Cada exemplo passa pelo neurônio com os pesos atuais (época ${E}).</p><div class="math">f = |x − ${fm(ND.C,3)}| × 10      z = w·f + b      p = σ(z)\nw = ${fm(m.w)}   b = ${fm(m.b)}</div><div class="tw"><table><thead><tr><th>x</th><th>f</th><th>z</th><th>p</th><th>esp.</th><th>prev.</th><th></th></tr></thead><tbody>${r.map(q=>`<tr class="${q.pr!==q.y?'bad':''}"><td>${fm(q.x)}</td><td>${fm(q.f,3)}</td><td>${fm(q.z,3)}</td><td>${fm(q.p,3)}</td><td>${q.y}</td><td>${q.pr}</td><td>${q.pr===q.y?'✓':'✗'}</td></tr>`).join('')}</tbody></table></div>`;
+  if(i===1)h=`<p>Para cada exemplo mede-se o erro (entropia cruzada): quanto mais longe p estiver da classe correta, maior a perda. No gráfico, os segmentos mostram essa distância.</p><div class="math">perda = −[ y·ln p + (1−y)·ln(1−p) ]</div><div class="tw"><table><thead><tr><th>x</th><th>y</th><th>p</th><th>|y − p|</th><th>perda</th></tr></thead><tbody>${r.map(q=>`<tr><td>${fm(q.x)}</td><td>${q.y}</td><td>${fm(q.p,3)}</td><td>${fm(Math.abs(q.y-q.p),3)}</td><td>${fm(q.loss,3)}</td></tr>`).join('')}<tr class="sum"><td>média</td><td></td><td></td><td></td><td>${fm(g.L,4)}</td></tr></tbody></table></div><p class="note">Acertos agora: ${g.hit} de ${r.length}.</p>`;
+  if(i===2)h=`<p>O gradiente diz para que lado mexer em w e b para reduzir a perda.</p><div class="math">∂L/∂w = média[ (p − y)·f ]      ∂L/∂b = média[ (p − y) ]</div><div class="tw"><table><thead><tr><th>x</th><th>p − y</th><th>(p − y)·f</th></tr></thead><tbody>${r.map(q=>`<tr><td>${fm(q.x)}</td><td>${fm(q.gB,3)}</td><td>${fm(q.gW,3)}</td></tr>`).join('')}<tr class="sum"><td>média</td><td>${fm(g.gb,4)}</td><td>${fm(g.gw,4)}</td></tr></tbody></table></div><p class="note">Gradiente positivo: reduzir o parâmetro; negativo: aumentá-lo.</p>`;
+  if(i===3)h=`<p>${$('nlOpt').value==='adam'?'Adam ajusta o passo com médias móveis do gradiente (mais rápido que o gradiente simples).':'Gradiente simples: novo = antigo − taxa × gradiente.'}</p><div class="tw"><table><thead><tr><th></th><th>antes</th><th>gradiente</th><th>passo</th><th>depois</th></tr></thead><tbody><tr><td>w</td><td>${fm(m.w,4)}</td><td>${fm(g.gw,4)}</td><td>${fm(s.dw,4)}</td><td><b>${fm(m.w-s.dw,4)}</b></td></tr><tr><td>b</td><td>${fm(m.b,4)}</td><td>${fm(g.gb,4)}</td><td>${fm(s.db,4)}</td><td><b>${fm(m.b-s.db,4)}</b></td></tr></tbody></table></div><div class="btns"><button class="go" id="nlApply">✔ Aplicar e ir para a época ${E+1}</button></div>`;
+  $('nlCard').innerHTML=`<h3><span class="pill">Época ${E}</span>${i+1}. ${NT[i]}</h3>${h}`}
+function nDiagram(hl){
+  const m=ND.m,x=ND.x,f=nF(x),z=m.w*f+m.b,p=sg(z),an=p>=.5,A=K.amber,sw=v=>Math.min(2+Math.abs(v)*.4,12),wc=m.w>=0?K.blue:K.red,bc=m.b>=0?K.blue:K.red,oc=an?K.red:K.green;
+  const nd=(cx,cy,r,t,sub,on,fill)=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill||'#fff'}" stroke="${on?A:'#8bb8e2'}" stroke-width="${on?5:3}"/><text x="${cx}" y="${cy+5}" text-anchor="middle" font-weight="700" font-size="14" fill="${K.ink}">${t}</text>${sub?`<text x="${cx}" y="${cy+r+16}" text-anchor="middle" font-size="12" fill="${K.muted}">${sub}</text>`:''}`;
+  const ed=(x1,y1,x2,y2,on,col,w)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${on?A:col}" stroke-width="${on?Math.max(5,w):w}" stroke-linecap="round"/>`;
+  const lb=(cx,cy,t,col)=>`<rect x="${cx-40}" y="${cy-11}" width="80" height="22" rx="6" fill="#fff" stroke="${col}"/><text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="12" font-weight="700" fill="${K.ink}">${t}</text>`;
+  const ti=['Entrada','Atributo','Soma Σ','Ativação','Saída'];const tx=[60,190,380,520,680];
+  $('nlSvg').innerHTML=ti.map((t,i)=>`<text x="${tx[i]}" y="18" text-anchor="middle" font-size="12" font-weight="700" fill="${K.muted}">${t}</text>`).join('')+
+   ed(90,130,160,130,hl===1,'#8bb8e2',3)+`<text x="125" y="118" text-anchor="middle" font-size="11" fill="${K.muted}">|x−c|·10</text>`+
+   ed(220,130,334,130,hl===2,wc,sw(m.w))+lb(277,152,'w = '+fm(m.w),wc)+
+   ed(380,60,380,84,hl===3,bc,sw(m.b))+lb(440,72,'b = '+fm(m.b),bc)+nd(380,42,18,'1','',hl===3)+
+   ed(426,130,490,130,false,'#8bb8e2',3)+ed(546,130,650,130,false,'#8bb8e2',3)+
+   nd(60,130,30,fm(x),'medição x',hl===0)+nd(190,130,30,fm(f),'f',hl===1)+
+   `<circle cx="380" cy="130" r="46" fill="#fff" stroke="${hl===3?A:K.blue}" stroke-width="${hl===3?5:4}"/><text x="380" y="124" text-anchor="middle" font-size="13" font-weight="700" fill="${K.ink}">z =</text><text x="380" y="144" text-anchor="middle" font-size="14" font-weight="700" fill="${K.ink}">${fm(z,3)}</text>`+
+   `<rect x="490" y="105" width="56" height="50" rx="9" fill="#fff" stroke="${hl===4?A:K.blue}" stroke-width="${hl===4?5:3}"/><text x="518" y="136" text-anchor="middle" font-size="22" font-weight="700" fill="${K.ink}">σ</text>`+
+   nd(680,130,34,fm(p,3),'p(anomalia)',hl===4)+
+   `<text x="740" y="126" text-anchor="middle" font-size="11" fill="${K.muted}">p ≥ 0,5?</text><circle cx="740" cy="160" r="22" fill="${oc}" fill-opacity=".18" stroke="${hl===5?A:oc}" stroke-width="${hl===5?5:3}"/><text x="740" y="165" text-anchor="middle" font-size="14" font-weight="800" fill="${oc}">${an?'1':'0'}</text><text x="740" y="198" text-anchor="middle" font-size="11" fill="${oc}">${an?'ALERTA':'OK'}</text>`+
+   `<text x="390" y="232" text-anchor="middle" font-size="12" fill="${K.muted}">z = Σ xᵢwᵢ + b = wᵀx  (aqui, a entrada efetiva é f)</text>`}
+function nInfSteps(){
+  const m=ND.m,x=ND.x,f=nF(x),pr=m.w*f,z=pr+m.b,p=sg(z),an=p>=.5;
+  return[
+   {t:'Entrada',h:`<div class="math">x = ${fm(x)}</div><p class="note">A medição entra no neurônio.</p>`},
+   {t:'Atributo f',h:`<div class="math">f = |x − centro| × 10\nf = |${fm(x)} − ${fm(ND.C,3)}| × 10 = <b>${fm(f,3)}</b></div><p class="note">Distância ao centro: perto do centro é “normal”; longe, “suspeito”.</p>`},
+   {t:'Produto pelo peso',h:`<div class="math">w · f = ${fm(m.w)} × ${fm(f,3)} = <b>${fm(pr,3)}</b></div>`},
+   {t:'Somar o viés',h:`<div class="math">z = w·f + b = ${fm(pr,3)} + (${fm(m.b)}) = <b>${fm(z,3)}</b></div><p class="note">O viés desloca o ponto de decisão.</p>`},
+   {t:'Sigmoide',h:`<div class="math">p = σ(z) = 1 / (1 + e^(−z)) = 1 / (1 + e^(${fm(-z,3)})) = <b>${fm(p,3)}</b></div><div class="bar"><span style="width:${(p*100).toFixed(1)}%;background:${an?K.red:K.green}"></span></div><p class="note">p é a probabilidade de anomalia.</p>`},
+   {t:'Decisão',h:`<div class="math">p ${an?'≥':'<'} 0,5  →  classe ${an?1:0}</div><div class="result ${an?'bad':'ok'}">${an?'ANOMALIA (1) — ALERTA':'NORMAL (0) — SEM ALERTA'}</div>`}]}
+function nInfCard(){const st=nInfSteps(),i=clamp(ND.is,0,5);ND.is=i;
+  $('nlIDots').innerHTML=dotsHTML(st.map(s=>s.t),i);$('nlICard').innerHTML=`<h3><span class="pill">Etapa ${i+1}/6</span>${st[i].t}</h3>${st[i].h}`;
+  $('nlIPrev').disabled=i===0;$('nlINext').disabled=$('nlIEnd').disabled=i===5;nDiagram(i);
+  $('nlXL').textContent=fm(ND.x);$('nlX').value=ND.x;
+  document.querySelectorAll('#nlChips button').forEach(b=>{b.className=+b.dataset.v===ND.x?'':'sec'})}
+function nChart(){
+  const W=900,H=300,g=cvs('nlChart',W,H),L=44,R=16,T0=16,B=H-30,pw=W-L-R,X=v=>L+v*pw,Y=p=>B-p*(B-T0),m=ND.m,ph=ND.ts;
+  g.font='12px system-ui';g.strokeStyle=K.grid;g.lineWidth=1;
+  [0,.5,1].forEach(v=>{g.beginPath();g.setLineDash(v===.5?[5,5]:[]);g.moveTo(L,Y(v));g.lineTo(L+pw,Y(v));g.stroke();g.setLineDash([]);txt(g,fm(v,1),L-6,Y(v)+4,{s:11,c:K.muted,a:'right'})});
+  for(let i=0;i<=10;i++)txt(g,fm(i/10,1),X(i/10),H-10,{s:11,c:K.muted,a:'center'});
+  g.strokeStyle=K.amber;g.lineWidth=2;g.beginPath();g.moveTo(X(ND.C),T0);g.lineTo(X(ND.C),B);g.stroke();txt(g,'centro',X(ND.C)+4,T0+10,{s:11,c:'#8a5b00',b:1});
+  const pf=v=>sg(m.w*nF(v)+m.b);
+  g.lineWidth=3.5;let prev=null;for(let i=0;i<=200;i++){const v=i/200,p=pf(v);if(prev){g.strokeStyle=p>=.5?K.red:K.green;g.beginPath();g.moveTo(X(prev[0]),Y(prev[1]));g.lineTo(X(v),Y(p));g.stroke()}prev=[v,p]}
+  ND.D.forEach(([v,y])=>{const p=pf(v),ok=(p>=.5?1:0)===y;
+    if(ph===1||ph===2){g.strokeStyle='rgba(200,50,69,.55)';g.lineWidth=3;g.beginPath();g.moveTo(X(v),Y(y));g.lineTo(X(v),Y(p));g.stroke()}
+    g.beginPath();g.arc(X(v),Y(y),6,0,7);g.fillStyle=y?K.red:K.green;g.fill();if(!ok){g.strokeStyle=K.ink;g.lineWidth=2;g.stroke()}
+    if(ph===0||ph===1){g.beginPath();g.arc(X(v),Y(p),3.5,0,7);g.fillStyle='#fff';g.fill();g.strokeStyle=K.ink;g.lineWidth=1.5;g.stroke()}});
+  const xi=X(ND.x);g.setLineDash([3,4]);g.strokeStyle=K.ink;g.lineWidth=1;g.beginPath();g.moveTo(xi,T0);g.lineTo(xi,B);g.stroke();g.setLineDash([]);
+  g.beginPath();g.arc(xi,Y(pf(ND.x)),6,0,7);g.fillStyle=K.blue;g.fill();txt(g,`x = ${fm(ND.x)}`,xi+6,B-6,{s:11,c:K.blue,b:1})}
+function nHist(){
+  const W=560,H=230,g=cvs('nlHist',W,H),L=40,R=10,T0=10,B=H-24,H_=ND.H,n=H_.length,mx=Math.max(20,n),X=v=>L+v/mx*(W-L-R),Y=v=>B-v*(B-T0);
+  g.strokeStyle=K.grid;g.lineWidth=1;[0,.5,1].forEach(v=>{g.beginPath();g.moveTo(L,Y(v));g.lineTo(W-R,Y(v));g.stroke();txt(g,fm(v,1),L-6,Y(v)+4,{s:11,c:K.muted,a:'right'})});
+  [0,.5,1].forEach(v=>txt(g,Math.round(v*mx),X(v*mx),H-6,{s:11,c:K.muted,a:'center'}));
+  if(n>1){const lm=Math.max(...H_.map(h=>h.L),.7),st=Math.max(1,Math.floor(n/400));
+    [['L',K.red,h=>h.L/lm],['a',K.green,h=>h.a]].forEach(([k,c,f])=>{g.strokeStyle=c;g.lineWidth=2;g.beginPath();for(let i=0;i<n;i+=st){const x=X(i+1),y=Y(f(H_[i]));i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()})}
+  txt(g,'erro (normalizado)',L+8,T0+12,{s:12,c:K.red});txt(g,'acertos (0–1)',L+150,T0+12,{s:12,c:K.green});txt(g,'época',W-R,H-6,{s:11,c:K.muted,a:'right'})}
+function nKpi(){const m=ND.m,g=nGrads(m.w,m.b);
+  $('nlKpi').innerHTML=[['época',m.t],['w',fm(m.w)],['b',fm(m.b)],['erro',fm(g.L,3)],['acertos',g.hit+'/'+ND.D.length],['∂L/∂w',fm(g.gw,3)],['∂L/∂b',fm(g.gb,3)]].map(([k,v])=>`<div class="metric"><span>${k}</span><strong>${v}</strong></div>`).join('');
+  $('nlWs').value=clamp(m.w,-10,40);$('nlBs').value=clamp(m.b,-60,10);$('nlWL').textContent=fm(m.w);$('nlBL').textContent=fm(m.b);$('nlCL').textContent=fm(ND.C,3);
+  const d=-m.b/(m.w*10);let bf={e:1e9};for(let i=0;i<=100;i++)for(let j=i;j<=100;j++){let e=0;for(const[v,y]of ND.D)if(cls(v,i*.01,j*.01)!==y)e++;if(e<bf.e)bf={e,lo:i*.01,hi:j*.01}}
+  $('nlCmp').innerHTML=`Neurônio: ${m.w>0&&d>0?`normal entre <b>${fm(ND.C-d)}</b> e <b>${fm(ND.C+d)}</b>`:'faixa ainda indefinida'} · ${ND.D.length-g.hit} erro(s)\nForça bruta (${NC} pares): normal entre <b>${fm(bf.lo)}</b> e <b>${fm(bf.hi)}</b> · ${bf.e} erro(s)`}
+function nAll(){nKpi();nTrainCard();nChart();nHist();nInfCard()}
+$('nlDots').onclick=e=>{const b=e.target.closest('[data-i]');if(b){ND.ts=+b.dataset.i;nTrainCard();nChart()}};
+$('nlPrev').onclick=()=>{ND.ts=Math.max(0,ND.ts-1);nTrainCard();nChart()};$('nlNext').onclick=()=>{ND.ts=Math.min(3,ND.ts+1);nTrainCard();nChart()};
+$('nlCard').onclick=e=>{if(e.target.id==='nlApply'){nStop();nApply(nGrads(ND.m.w,ND.m.b));ND.ts=0;nAll()}};
+$('nlIDots').onclick=e=>{const b=e.target.closest('[data-i]');if(b){ND.is=+b.dataset.i;nInfCard()}};
+$('nlIPrev').onclick=()=>{ND.is--;nInfCard()};$('nlINext').onclick=()=>{ND.is++;nInfCard()};$('nlIEnd').onclick=()=>{ND.is=5;nInfCard()};
+function nSetX(v){ND.x=clamp(Math.round(v*100)/100,0,1);ND.is=0;nChart();nInfCard()}
+$('nlX').oninput=e=>nSetX(+e.target.value);
+TESTS.forEach(v=>{const b=document.createElement('button');b.dataset.v=v;b.textContent=fm(v);b.onclick=()=>nSetX(v);$('nlChips').append(b)});
+$('nlPlay').onclick=()=>{if(ND.timer)return nStop();$('nlPlay').textContent='⏸ Pausar';ND.timer=setInterval(()=>{nRun(+$('nlSpd').value);nAll()},60)};
+$('nl1').onclick=()=>{nStop();nRun(1);ND.ts=0;nAll()};$('nl100').onclick=()=>{nStop();nRun(100);ND.ts=0;nAll()};$('nl1000').onclick=()=>{nStop();nRun(1000);ND.ts=0;nAll()};
+$('nlReset').onclick=()=>nReset();$('nlRand').onclick=()=>nReset(+(Math.random()*30-5).toFixed(1),+(Math.random()*-40).toFixed(1));
+$('nlOpt').onchange=e=>{$('nlLr').value=e.target.value==='adam'?.05:.5;ND.m.mw=ND.m.mb=ND.m.vw=ND.m.vb=0;ND.m.k=0;nAll()};
+$('nlLr').oninput=()=>nTrainCard();$('nlSpd').oninput=e=>$('nlSpdL').textContent=e.target.value;
+function nSetWB(w,b){nStop();const m=ND.m;m.w=w;m.b=b;m.mw=m.mb=m.vw=m.vb=0;m.k=0;nAll()}
+$('nlWs').oninput=e=>nSetWB(+e.target.value,ND.m.b);$('nlBs').oninput=e=>nSetWB(ND.m.w,+e.target.value);
+$('nlC').oninput=e=>{ND.C=+e.target.value;nAll()};
+$('nlAuto').onclick=()=>{const n=ND.D.filter(d=>!d[1]).map(d=>d[0]);if(n.length){ND.C=+((Math.min(...n)+Math.max(...n))/2).toFixed(3);$('nlC').value=ND.C;nAll()}};
+document.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{const k=b.dataset.pre;
+  if(k==='orig'){ND.D=EX.map(a=>a.slice());ND.C=.495}else{const[lo,hi]=k==='n'?[.45,.55]:[.2,.8],xs=new Set([0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1,+(lo-.01).toFixed(2),lo,hi,+(hi+.01).toFixed(2)]);ND.D=[...xs].sort((a,b)=>a-b).map(v=>[v,v<lo||v>hi?1:0]);ND.C=(lo+hi)/2}
+  $('nlC').value=ND.C;nReset(ND.m.w,ND.m.b,false);nlog(`[DADOS] Conjunto trocado: ${ND.D.length} exemplos.`)});
+const nc=$('nlChart');
+nc.onpointermove=e=>{const[px]=ptr(e,nc,900,300),v=clamp((px-44)/840,0,1),p=sg(ND.m.w*nF(v)+ND.m.b);$('nlHover').textContent=`x = ${fm(v)} → f = ${fm(nF(v),3)} → p(anomalia) = ${fm(p,3)} → ${p>=.5?'ANOMALIA':'NORMAL'}`};
+nc.onclick=e=>{const[px,py]=ptr(e,nc,900,300),v=clamp((px-44)/840,0,1),mode=$('nlMode').value;
+  if(mode==='insp')return nSetX(v);
+  if(mode==='del'){let bi=-1,bd=.03;ND.D.forEach((d,i)=>{const q=Math.abs(d[0]-v);if(q<bd){bd=q;bi=i}});if(bi>=0){nlog(`[DADOS] Removido exemplo x=${fm(ND.D[bi][0])}.`);ND.D.splice(bi,1);nAll()}return}
+  const y=py<(300-30)-.5*(300-30-16)?1:0;ND.D.push([+v.toFixed(2),y]);nlog(`[DADOS] Adicionado exemplo x=${fm(+v.toFixed(2))} classe ${y}.`);nAll()};
+
+/* ==================== INICIALIZAÇÃO ==================== */
+renderTrain();renderInfer();nReset();
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{drawTrain();drawHeat();renderInfer();nChart();nHist()},120)});
 })();
 </script>
-
-
-<script>
-(function(){
- const $=id=>document.getElementById(id);
- const fmt=n=>Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
- let currentStep=4, animTimer=null;
- function val(id){return Number($(id).value)}
- function classify(x,lo,hi){return x<lo||x>hi?1:0}
- function render(){
-   let x=val('netValue'),lo=val('netLow'),hi=val('netHigh');
-   if(lo>hi){const t=lo;lo=hi;hi=t;$('netLow').value=lo;$('netHigh').value=hi}
-   $('netValueLabel').textContent=fmt(x);$('netValueNum').value=x;
-   $('netLowLabel').textContent=fmt(lo);$('netHighLabel').textContent=fmt(hi);
-   const anomaly=classify(x,lo,hi)===1, below=x<lo, above=x>hi;
-   $('netClass').textContent=anomaly?'ANOMALIA (1)':'NORMAL (0)';
-   $('netClass').style.color=anomaly?'#c83245':'#14845b';
-   $('netReason').textContent=below?`${fmt(x)} < ${fmt(lo)}: abaixo do limite inferior.`:above?`${fmt(x)} > ${fmt(hi)}: acima do limite superior.`:'Valor dentro dos limites, inclusive.';
-   $('netMetricX').textContent=fmt(x);$('netMetricY').textContent=anomaly?'1':'0';
-   $('netDistance').textContent=fmt(below?lo-x:above?x-hi:0);
-   const steps=[
-    `1 · Entrada: recebe a medição ${fmt(x)}.`,
-    `2 · Comparação inferior: ${fmt(x)} < ${fmt(lo)} é ${below?'verdadeiro':'falso'}.`,
-    `3 · Comparação superior: ${fmt(x)} > ${fmt(hi)} é ${above?'verdadeiro':'falso'}.`,
-    `4 · Decisão: ${anomaly?'fora da faixa → ANOMALIA / ALERTA':'dentro da faixa → NORMAL / SEM ALERTA'}.`
-   ];
-   $('netSteps').innerHTML=steps.map((t,i)=>`<div class="flow-step ${i<currentStep?'done':i===currentStep?'current':''}">${t}</div>`).join('');
-   const active=currentStep;
-   const edge=(a,b)=>`<path class="edge ${active>=a?'hot':''} ${anomaly&&((below&&a===1)||(above&&a===2))?'bad':''}" d="${a===0?'M145 165 L220 165':a===1?'M355 105 L430 135':a===2?'M355 225 L430 195':'M555 165 L625 165'}" />`;
-   const node=(x,y,w,h,title,sub,cls='')=>`<rect class="node ${cls}" x="${x}" y="${y}" width="${w}" height="${h}" rx="13"/><text class="net-label" x="${x+w/2}" y="${y+27}">${title}</text><text class="net-small" x="${x+w/2}" y="${y+49}">${sub}</text>`;
-   $('neuronSvg').innerHTML=`
-    <defs><marker id="netArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#1769aa"/></marker></defs>
-    ${edge(0,4)}${edge(1,4)}${edge(2,4)}${edge(3,4)}
-    ${node(15,132,130,66,'MEDIÇÃO',fmt(x),active===0?'active':'')}
-    ${node(220,70,135,70,'x < inferior',below?'VERDADEIRO':'FALSO',below?'alert-node':active===1?'active':'')}
-    ${node(220,190,135,70,'x > superior',above?'VERDADEIRO':'FALSO',above?'alert-node':active===2?'active':'')}
-    ${node(430,125,125,80,'DECISÃO',below||above?'FORA DA FAIXA':'DENTRO',active>=3?(anomaly?'alert-node':'normal-node'):'')}
-    ${node(625,132,120,66,anomaly?'ALERTA':'SEM ALERTA',anomaly?'CLASSE 1':'CLASSE 0',active>=4?(anomaly?'alert-node':'normal-node'):'')}
-    <text class="net-small" x="285" y="45">Comparação 1</text><text class="net-small" x="285" y="285">Comparação 2</text>
-    <text class="net-small" x="490" y="230">OR lógico das condições</text>`;
- }
- function syncFromNumber(){let x=Number($('netValueNum').value);if(Number.isFinite(x)&&x>=0&&x<=1){$('netValue').value=x;currentStep=4;render()}}
- $('netValue').addEventListener('input',()=>{currentStep=4;render()});
- $('netValueNum').addEventListener('input',syncFromNumber);
- ['netLow','netHigh'].forEach(id=>$(id).addEventListener('input',()=>{currentStep=4;render()}));
- $('netAnimate').addEventListener('click',()=>{
-   if(animTimer)clearInterval(animTimer);currentStep=0;render();
-   animTimer=setInterval(()=>{currentStep++;render();if(currentStep>=4){clearInterval(animTimer);animTimer=null}},650);
- });
- $('netReset').addEventListener('click',()=>{if(animTimer)clearInterval(animTimer);animTimer=null;$('netValue').value=.45;$('netLow').value=.33;$('netHigh').value=.66;currentStep=4;render()});
- render();
-})();
-</script>
-
 </body>
 </html>
