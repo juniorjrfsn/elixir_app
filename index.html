@@ -86,6 +86,32 @@ section,.card{background:var(--panel);border:1px solid var(--border);border-radi
     <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Medição</th><th>Resultado esperado pela regra</th><th>Sinal</th></tr></thead><tbody id="exampleRows"></tbody></table></div>
   </section>
 
+
+  <section id="charts">
+    <h2>Gráficos didáticos do treinamento e da inferência</h2>
+    <p class="muted">Os gráficos são desenhados em JavaScript no próprio navegador e acompanham os passos do simulador.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Gráfico A — exemplos de treinamento e faixa aprendida</h3>
+        <p class="muted">Cada ponto representa um exemplo. Vermelho = anomalia esperada; verde = normal esperado. As linhas verticais mostram os limites selecionados.</p>
+        <canvas id="trainingChart" width="760" height="300" style="width:100%;height:auto;display:block" role="img" aria-label="Gráfico dos exemplos de treinamento e limites aprendidos"></canvas>
+        <div id="trainingChartCaption" class="stepbox">Avance no treinamento para visualizar os limites encontrados.</div>
+      </div>
+      <div class="card">
+        <h3>Gráfico B — inferência da medição atual</h3>
+        <p class="muted">O marcador mostra onde a medição cai na escala de 0 a 1 e se está dentro ou fora da faixa normal.</p>
+        <canvas id="inferenceChart" width="760" height="260" style="width:100%;height:auto;display:block" role="img" aria-label="Gráfico da medição atual em relação aos limites normais"></canvas>
+        <div id="inferenceChartCaption" class="stepbox">Inicie uma inferência para posicionar a medição no gráfico.</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Gráfico C — comparação entre esperado e previsto</h3>
+      <p class="muted">Disponível após o treinamento. Cada par de barras compara a classe esperada dos exemplos com a classe prevista pela faixa aprendida.</p>
+      <canvas id="comparisonChart" width="1000" height="320" style="width:100%;height:auto;display:block" role="img" aria-label="Comparação das classes esperadas e previstas"></canvas>
+      <div id="comparisonCaption" class="stepbox">O gráfico será atualizado quando o treinamento for concluído.</div>
+    </div>
+  </section>
+
   <section id="limits">
     <h2>5. Como interpretar corretamente</h2>
     <ul>
@@ -253,5 +279,116 @@ $("inferReset").addEventListener("click",resetInference);
 renderTrainingRows();renderExampleButtons();updateRange(.33,.66);
 $("exampleRows").innerHTML='<tr><td colspan="3">Execute o treinamento para exibir os resultados.</td></tr>';
 </script>
+
+<script>
+(function(){
+  const trainingData = [[0,1],[.10,1],[.20,1],[.32,1],[.33,0],[.40,0],[.50,0],[.60,0],[.66,0],[.67,1],[.80,1],[.90,1],[1,1]];
+  const $ = id => document.getElementById(id);
+  let seenTrainingStep = 0, seenInferenceValue = null, chartModel = null;
+  const colors = {red:"#c83245", green:"#14845b", blue:"#1769aa", ink:"#172b4d", muted:"#5c6f89", grid:"#d7e3f0", pale:"#eaf1f8"};
+  function ctxFor(id){
+    const c=$(id); if(!c) return null;
+    const ctx=c.getContext("2d"); if(!ctx) return null;
+    ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);
+    return {c,ctx};
+  }
+  function text(ctx,s,x,y,size=14,color=colors.ink,align="left"){
+    ctx.fillStyle=color;ctx.font=`${size}px system-ui, sans-serif`;ctx.textAlign=align;ctx.fillText(s,x,y);
+  }
+  function xPos(x,left,width){return left+x*width;}
+  function drawTraining(){
+    const o=ctxFor("trainingChart");if(!o)return;const {ctx}=o;
+    const left=48,right=22,top=42,bottom=55,w=760-left-right,h=300-top-bottom;
+    text(ctx,"Classe esperada por valor de entrada",left,22,15,colors.ink);
+    ctx.strokeStyle=colors.grid;ctx.lineWidth=1;
+    for(let i=0;i<=10;i++){const x=xPos(i/10,left,w);ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,top+h);ctx.stroke();text(ctx,(i/10).toFixed(1),x,top+h+22,11,colors.muted,"center");}
+    const lo=chartModel?chartModel.limite_inferior:null, hi=chartModel?chartModel.limite_superior:null;
+    if(lo!==null&&hi!==null){
+      ctx.fillStyle="#dff5e9";ctx.fillRect(xPos(lo,left,w),top,xPos(hi,left,w)-xPos(lo,left,w),h);
+      ctx.setLineDash([5,4]);ctx.strokeStyle=colors.green;
+      [lo,hi].forEach((v,i)=>{const x=xPos(v,left,w);ctx.beginPath();ctx.moveTo(x,top-5);ctx.lineTo(x,top+h);ctx.stroke();text(ctx,`${i===0?"Inferior":"Superior"} ${v.toFixed(2)}`,x,top-12,11,colors.green,"center")});ctx.setLineDash([]);
+    }
+    trainingData.forEach(([x,y],i)=>{
+      const px=xPos(x,left,w),py=y?top+42:top+h-40;
+      ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fillStyle=y?colors.red:colors.green;ctx.fill();
+      ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke();
+      text(ctx, x.toFixed(2), px, py+(y? -12:22),10,y?colors.red:colors.green,"center");
+    });
+    text(ctx,"ANOMALIA (1)",left,top+h+43,12,colors.red);
+    text(ctx,"NORMAL (0)",left+150,top+h+43,12,colors.green);
+    $("trainingChartCaption").textContent=chartModel
+      ? `Faixa encontrada: ${chartModel.limite_inferior.toFixed(2)}–${chartModel.limite_superior.toFixed(2)} · ${chartModel.erros} erro(s) em ${chartModel.total_exemplos} exemplos.`
+      : "Ainda sem faixa confirmada. Os pontos mostram os exemplos rotulados usados no treinamento.";
+  }
+  function drawComparison(){
+    const o=ctxFor("comparisonChart");if(!o)return;const {ctx}=o;
+    const left=48,top=35,w=920,h=220;
+    text(ctx,"Esperado × previsto (0 = normal, 1 = anomalia)",left,22,15);
+    if(!chartModel){
+      text(ctx,"Conclua o treinamento para calcular as previsões.",left,120,16,colors.muted);
+      $("comparisonCaption").textContent="Aguardando o treinamento.";
+      return;
+    }
+    const slot=w/trainingData.length;
+    trainingData.forEach(([x,y],i)=>{
+      const pred=(x<chartModel.limite_inferior||x>chartModel.limite_superior)?1:0;
+      const cx=left+i*slot+slot/2;
+      const yExpected=top+h-y*145, yPred=top+h-pred*145;
+      ctx.fillStyle=y?colors.red:colors.green;ctx.fillRect(cx-13,yExpected,11,top+h-yExpected);
+      ctx.fillStyle=pred? "#ed7d89":"#55bd8d";ctx.fillRect(cx+2,yPred,11,top+h-yPred);
+      text(ctx,x.toFixed(2),cx,top+h+20,10,colors.muted,"center");
+      if(y!==pred){ctx.strokeStyle=colors.red;ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,top+h-12,8,0,Math.PI*2);ctx.stroke();}
+    });
+    ctx.strokeStyle=colors.grid;ctx.beginPath();ctx.moveTo(left,top+h);ctx.lineTo(left+w,top+h);ctx.stroke();
+    $("comparisonCaption").textContent=`Erros de classificação nos exemplos exibidos: ${chartModel.erros} de ${chartModel.total_exemplos}. Barras fortes = classe esperada; barras claras = previsão.`;
+  }
+  function drawInference(){
+    const o=ctxFor("inferenceChart");if(!o)return;const {ctx}=o;
+    const left=48,right=28,y=110,w=760-left-right;
+    text(ctx,"Escala da medição (0 a 1)",left,28,15);
+    const lo=chartModel?chartModel.limite_inferior:.33,hi=chartModel?chartModel.limite_superior:.66;
+    ctx.fillStyle="#f6b8c0";ctx.fillRect(left,y,w*lo,32);
+    ctx.fillStyle="#8bd8b1";ctx.fillRect(left+w*lo,y,w*(hi-lo),32);
+    ctx.fillStyle="#f6b8c0";ctx.fillRect(left+w*hi,y,w*(1-hi),32);
+    ctx.strokeStyle="#fff";ctx.lineWidth=2;
+    [lo,hi].forEach(v=>{const x=left+w*v;ctx.beginPath();ctx.moveTo(x,y-14);ctx.lineTo(x,y+48);ctx.stroke();text(ctx,v.toFixed(2),x,y+68,12,colors.ink,"center")});
+    for(let i=0;i<=10;i++){const x=left+w*i/10;text(ctx,(i/10).toFixed(1),x,y+92,10,colors.muted,"center");}
+    if(seenInferenceValue!==null){
+      const x=left+w*seenInferenceValue,alert=seenInferenceValue<lo||seenInferenceValue>hi;
+      ctx.beginPath();ctx.moveTo(x,y-24);ctx.lineTo(x,y+45);ctx.strokeStyle=alert?colors.red:colors.blue;ctx.lineWidth=4;ctx.stroke();
+      ctx.beginPath();ctx.arc(x,y-25,8,0,Math.PI*2);ctx.fillStyle=alert?colors.red:colors.blue;ctx.fill();
+      text(ctx,`Medição ${seenInferenceValue.toFixed(2)}`,Math.max(left+5,Math.min(left+w-5,x)),y-42,13,alert?colors.red:colors.blue,"center");
+      $("inferenceChartCaption").textContent=alert?`A medição ${seenInferenceValue.toFixed(2)} está fora da faixa normal: ALERTA.`:`A medição ${seenInferenceValue.toFixed(2)} está dentro da faixa normal: SEM ALERTA.`;
+    }else{
+      text(ctx,"Aguardando medição",left+w/2,y-18,13,colors.muted,"center");
+      $("inferenceChartCaption").textContent="Informe uma medição e inicie a inferência para ver o marcador.";
+    }
+  }
+  function refresh(){
+    const t=$("trainingStep")?.textContent||"";
+    if(t.includes("Finalizando o treinamento")||t.includes("Treinamento concluído")||t.includes("Treinamento já concluído")){
+      chartModel={limite_inferior:.33,limite_superior:.66,erros:0,total_exemplos:13};
+    } else {
+      const m=t.match(/Limite inferior\s+([\d,\.]+).*Limite superior\s+([\d,\.]+)/s);
+      if(m)chartModel={limite_inferior:parseFloat(m[1].replace(",",".")),limite_superior:parseFloat(m[2].replace(",." ,".")),erros:0,total_exemplos:13};
+    }
+    const log=$("trainLog")?.textContent||"";
+    if(log.includes("limite_inferior")&&log.includes("limite_superior"))chartModel={limite_inferior:.33,limite_superior:.66,erros:0,total_exemplos:13};
+    const inferLog=$("inferLog")?.textContent||"";
+    const match=inferLog.match(/Recebendo nova medição: ([\d,\.]+)/);
+    if(match)seenInferenceValue=parseFloat(match[1].replace(",","."));
+    if(inferLog.includes("Aguardando início")||inferLog.includes("Aguardando início..."))seenInferenceValue=null;
+    drawTraining();drawComparison();drawInference();
+  }
+  // Os listeners são registrados depois dos listeners principais, para redesenhar
+  // os gráficos após cada ação do simulador.
+  ["trainNext","trainAll","trainReset","inferStart","inferNext","inferReset"].forEach(id=>{
+    $(id)?.addEventListener("click",()=>setTimeout(refresh,0));
+  });
+  $("measurement")?.addEventListener("input",()=>{seenInferenceValue=Number($("measurement").value);drawInference()});
+  drawTraining();drawComparison();drawInference();
+})();
+</script>
+
 </body>
 </html>
