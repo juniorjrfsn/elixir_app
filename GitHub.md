@@ -20,8 +20,7 @@ gh auth status
 
 #### Remover uma conta do GitHub CLI
 Se você quiser desconectar a conta juniorjrfsn, execute:
-```
-gh auth logout --hostname github.com --user juniorjfsny
+``` 
 gh auth logout --hostname github.com --user juniorjrfsn
 ```
 
@@ -35,12 +34,11 @@ git remote -v
 
 #### Repositório
 ``` 
-git config user.name "juniorjrfsn"
-git config user.email "junior.jrfsn@gmail.com"
+git config user.name "juniorjrfsn" 
 ``` 
 
 #### Repositório Globais
 ``` 
 git config --global user.name "juniorjrfsn"
-git config --global user.email "junior.jrfsn@gmail.com"
+git config --global user.email "email"
 ```
